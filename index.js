@@ -47,7 +47,7 @@ const  {addGroupToBanList,isGroupBanned,removeGroupFromBanList} = require("./bdd
 const {isGroupOnlyAdmin,addGroupToOnlyAdminList,removeGroupFromOnlyAdminList} = require("./bdd/onlyAdmin");
 //const //{loadCmd}=require("/framework/mesfonctions")
 let { reagir } = require(__dirname + "/framework/app");
-var session = conf.session.replace(/KYPHER_XMD;;;/g,"");
+var session = conf.session.replace(/HEROKU-BT;;;/g,"");
 const prefixe = conf.PREFIXE;
 
 
@@ -165,7 +165,7 @@ setTimeout(() => {
             
             var dev = [dj, dj2,dj3,luffy].map((t) => t.replace(/[^0-9]/g) + "@s.whatsapp.net").includes(auteurMessage);
             function repondre(mes) { zk.sendMessage(origineMessage, { text: mes }, { quoted: ms }); }
-            console.log("\t [][]...{Kypher_xmd}...[][]");
+            console.log("\t [][]...{HEROKU-BT}...[][]");
             console.log("=========== Nouveau message ===========");
             if (verifGroupe) {
                 console.log("message provenant du groupe : " + nomGroupe);
@@ -663,7 +663,7 @@ zk.ev.on('group-participants.update', async (group) => {
     try {
         ppgroup = await zk.profilePictureUrl(group.id, 'image');
     } catch {
-        ppgroup = 'https://telegra.ph/file/4cc2712eee93c105f6739.jpg';
+        ppgroup = 'https://files.catbox.moe/zotx9t.jpg';
     }
 
     try {
@@ -812,27 +812,27 @@ ${metadata.desc}`;
         zk.ev.on("connection.update", async (con) => {
             const { lastDisconnect, connection } = con;
             if (connection === "connecting") {
-                console.log("ℹ️ KYPHER_XMD CONNECTING...");
+                console.log("ℹ️ HEROKU-BT CONNECTING...");
             }
             else if (connection === 'open') {
-                console.log("✅ kypher_xmd Connection Established! ☺️");
+                console.log("✅ Heroku-bt Connection Established! ☺️");
                 console.log("--");
                 await (0, baileys_1.delay)(200);
                 console.log("------");
                 await (0, baileys_1.delay)(300);
                 console.log("------------------/-----");
-                console.log("kypher xmd is Online 🕸\n\n");
+                console.log("Heroku-bt is Online 🕸\n\n");
                 //chargement des commandes 
                 console.log("Loading Commands ...\n");
-                fs.readdirSync(__dirname + "/Andbad_cmds").forEach((fichier) => {
+                fs.readdirSync(__dirname + "/commandes").forEach((fichier) => {
                     if (path.extname(fichier).toLowerCase() == (".js")) {
                         try {
-                            require(__dirname + "/Andbad_cmds/" + fichier);
+                            require(__dirname + "/commandes/" + fichier);
                             console.log(fichier + " installed ✔️");
                         }
                         catch (e) {
                             console.log(`${fichier} n'a pas pu être chargé pour les raisons suivantes : ${e}`);
-                        } /* require(__dirname + "/Andbad_cmds/" + fichier);
+                        } /* require(__dirname + "/commandes/" + fichier);
                          console.log(fichier + " installed ✔️")*/
                         (0, baileys_1.delay)(300);
                     }
@@ -855,12 +855,16 @@ ${metadata.desc}`;
                 if((conf.DP).toLowerCase() === 'yes') {     
                 let cmsg = `
 ╔════◇
-║ 『KYPHER-XMD CONNECTED』
+║. HEROKU-BT CONNECTED 🌟
 ║    Prefix : [ ${prefixe} ]
 ║    Mode :${md}
-║    Total Commands : ${evt.cm.length}︎
-║    SUPPORT KYPHER_TCH 
-╚════════════════╝`;
+║   Total Commands : ${evt.cm.length}︎
+║    owner Rahmani 💫
+╚════════════════╝
+our channel supporter ✅
+https://whatsapp.com/channel/0029VatokI45EjxufALmY32X
+
+`;
                 await zk.sendMessage(zk.user.id, { text: cmsg });
                 }
             }
