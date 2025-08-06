@@ -27,8 +27,7 @@ WhatsApp Bot Created by ✞𓊈𒆜 _𝐊𝐘𝚸𝚮𝚵𝚪_𒆜𓊉 ✞
 
 ## SETUP
 
-### 🔧 Fork This Project
-[`FORK`](https://github.com/KYPHER26/KYPHER_XMD/fork)
+### 🔧 Fork This Pr/fork)
 
 ### 🔍 QR SCANNER
 [`QR SCANNER`](https://kypher-xmd-pair-code.onrender.com/)
@@ -49,7 +48,7 @@ WhatsApp Bot Created by ✞𓊈𒆜 _𝐊𝐘𝚸𝚮𝚵𝚪_𒆜𓊉 ✞
 
 ### 2. **If You Have a Heroku Account:**
 
-   - <a align="center"><a href="https://dashboard.heroku.com/new?template=https://github.com/KYPHER26/KYPHER_XMD"> 
+   - <a align="center"><a href="https://dashboard.heroku.com/new?template=https://github.com/rahzyn/HEROKU-BT"> 
    <img src="https://img.shields.io/badge/DEPLOY%20NOW-blue?style=for-the-badge&logo=heroku" width="220" height="38.45"/></a></p>
 
 ---
