@@ -9,7 +9,7 @@ RUN apt-get update && \
   npm i pm2 -g && \
   rm -rf /var/lib/apt/lists/*
   
-RUN git clone https://github.com/KYPHER26/KYPHER_XMD.git  /root/Zokou_Bot
+RUN git clone https://github.com/rahzyn/HEROKU-BT.git  /root/Zokou_Bot
 WORKDIR /root/Zokou_Bot/
 
 
