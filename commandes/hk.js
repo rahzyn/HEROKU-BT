@@ -161,7 +161,7 @@ zokou({
     'nom': "PM_CHATBOT",
     'choix': ["yes", 'no']
   }];
-  let _0x3723be = "    ╭──────༺♡༻──────╮\n             X20 YESSER-MD settings\n    ╰──────༺♡༻──────╯\n\n";
+  let _0x3723be = "    ╭──────༺♡༻──────╮\n             X20 HEROKU-BT settings\n    ╰──────༺♡༻──────╯\n\n";
   for (v = 0x0; v < _0x39c108.length; v++) {
     _0x3723be += v + 0x1 + "- *" + _0x39c108[v].nom + "*\n";
   }
@@ -183,7 +183,7 @@ zokou({
     nom: _0x44695b,
     choix: _0x39fdd4
   } = _0x39c108[_0x590e99];
-  let _0x191a85 = "    ╭──────༺♡༻──────╮\n             X20 YESSER-MD settings\n    ╰──────༺♡༻──────╯\n\n";
+  let _0x191a85 = "    ╭──────༺♡༻──────╮\n             X20 HEROKU-BT settings\n    ╰──────༺♡༻──────╯\n\n";
   _0x191a85 += "*Name* :" + _0x44695b + "\n";
   _0x191a85 += "*Description* :" + getDescriptionFromEnv(_0x44695b) + "\n\n";
   _0x191a85 += "┌────── ⋆⋅☆⋅⋆ ──────┐\n\n";
