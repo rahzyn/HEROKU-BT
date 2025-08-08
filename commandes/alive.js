@@ -74,7 +74,7 @@ else {
         if(!superUser) { repondre("*🌀 HEROKU-BT IS ALIVE FOR A LIFE TIME ✅*") ; return};
 
       await   repondre("HEROKU-BT IS ALIVE AT THE MOMMENT DEPLOY IT NOW AND ENJOY 😌");
-         repondre("don't do fake thinks :)")
+         repondre("https://files.catbox.moe/uv6fb5.mp3")
      }
  } else {
 
