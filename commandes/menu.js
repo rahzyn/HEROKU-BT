@@ -30,19 +30,19 @@ zokou({ nomCom: "menu", categorie: "General" }, async (dest, zk, commandOptions)
 
     let headerMessage = `
 ╭────────────────────────╮  
-│       *𝐇𝐄𝐑𝐎𝐊𝐔-𝐁𝐎𝐓*.                │  
-│  ✳✳ WANAKITAA FAMILY ✳✴            │  
+│       *𝐇𝐄𝐑𝐎𝐊𝐔-𝐁𝐎𝐓*              │  
+│   *WANAKITAA FAMILY*            │  
 ╰────────────────────────╯  
 
 ╭━━❰ *AVAILABLE MENUS* ❱━━╮  
-┃ ❒  📜 ▸ *MENU*                    
-┃ ❒  📄 ▸ *MENU2*                  
-┃ ❒  🐞 ▸ *BUGMENU*  
+┃ ❒  ▸ *MENU* 🧷               
+┃ ❒  ▸ *MENU2*   ⚒️               
+┃ ❒  ▸ *BUGMENU* 🦠
 ┃ =======================
-┃ ❒  🔌 ▸ *PLUGINS*  : ${cm.length}   
-┃ ❒  💾 ▸ *RAM*      : ${format(os.totalmem() - os.freemem())}/${format(os.totalmem())}    
-┃ ❒  🖥️  ▸ *SYSTEM*   : ${os.platform()}         
-┃ ❒  🎨 ▸ *THEME*    : HEROKU-BT  
+┃ ❒  ▸ *PLUGINS*  : ${cm.length}   
+┃ ❒  ▸ *RAM*      : ${format(os.totalmem() - os.freemem())}/${format(os.totalmem())}    
+┃ ❒  ▸ *SYSTEM* 🤖  : ${os.platform()}         
+┃ ❒  ▸ *THEME*  : HEROKU-BT  🔥
 ╰━━━━━━━━━━━━━━━━━━━━━━╯  
 
 📌 _*Type the command to proceed.*_  
