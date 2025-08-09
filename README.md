@@ -34,7 +34,7 @@ ________________________________
 #     CONTACT NUMBER
 
 
-<a href="https://wa.me/+255693629079-INFO"><img title="CONTACT-Elon" src="https://img.shields.io/badge/CONTACT-Rahman-md?color=purple&style=for-the-badge&logo=audi" width="240" height="45.45"/></a></p>
+<a href="https://wa.me/+255693629079-INFO"><img title="CONTACT-Elon" src="https://img.shields.io/badge/CONTACT-Rahman-md?color=purple&style=for-the-badge&logo=audi" width="200" height="45.45"/></a></p>
 
 
 
