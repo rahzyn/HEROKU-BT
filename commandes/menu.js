@@ -31,12 +31,12 @@ zokou({ nomCom: "menu", categorie: "General" }, async (dest, zk, commandOptions)
     let headerMessage = `
 ╭─────────────────╮  
 │        *𝐇𝐄𝐑𝐎𝐊𝐔-𝐁𝐎𝐓*     │  
-│      *WANAKITAA FAMILY*   │  
+│      *BEST WHATSAPP BOT*  │  
 ╰─────────────────╯  
 
 ╭━━❰ *AVAILABLE MENUS* ❱━━╮  
 ┃ ❒  ▸ *MENU* 🧷               
-┃ ❒  ▸ *MENU2*   ⚒️               
+┃ ❒  ▸ *MENU2*   ⚒️              
 ┃ ❒  ▸ *BUGMENU* 🦠
 ┃ =======================
 ┃ ❒  ▸ *PLUGINS*  : ${cm.length}   
