@@ -29,6 +29,14 @@ ________________________________
  - <a align="center"><a href="https://dashboard.heroku.com/new?template=https://github.com/rahzyn/HEROKU-BT/tree/main"> <img src="https://img.shields.io/badge/DEPLOY%20NOW-blue?style=for-the-badge&logo=heroku" width="220" height="38.45"/></a></p>
 
 _______________________________
+
+DEPLOY TO RENDER`
+
+ - <a align="center"><a href="(https://render.com/deploy?repo=https://github.com/rahzayn/HEROKU-BT)"> <img src="https://img.shields.io/badge/DEPLOY%20NOW-black?style=for-the-badge&logo=heroku" width="220" height="38.45"/></a></p>
+_________________________________
+
+
+
 *Thank you for choosing HEROKU-BT, Dont forget 🙃 to fork the repo🪡 and give star 🌟*
 ________________________________
 #     CONTACT NUMBER
