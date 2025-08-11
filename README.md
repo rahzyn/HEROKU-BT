@@ -29,7 +29,7 @@ ________________________________
  - <a align="center"><a href="https://dashboard.heroku.com/new?template=https://github.com/rahzyn/HEROKU-BT/tree/main"> <img src="https://img.shields.io/badge/DEPLOY%20NOW-blue?style=for-the-badge&logo=heroku" width="220" height="38.45"/></a></p>
 
 _______________________________
-3.    ,Deploy here to render,
+3.    `Deploy here to render`
     
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/rahzayn/HEROKU-BT)
 
