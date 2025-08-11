@@ -32,7 +32,7 @@ _______________________________
 
 DEPLOY TO RENDER`
 
- - <a align="center"><a href="(https://render.com/deploy?repo=https://github.com/rahzayn/HEROKU-BT)"> <img src="https://img.shields.io/badge/DEPLOY%20NOW-black?style=for-the-badge&logo=heroku" width="220" height="38.45"/></a></p>
+ - <a align="center"><a href="(https://render.com/deploy?repo=https://github.com/rahzayn/HEROKU-BT)"> <img src="https://img.shields.io/badge/DEPLOY%20NOW-black?style=for-the-badge&logo=render" width="220" height="38.45"/></a></p>
 _________________________________
 
 
