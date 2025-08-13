@@ -2,7 +2,7 @@
 #           HEROKU - BOT
 
 <p align="center">
-  <mp4 src="https://files.catbox.moe/sm1om8.mp4" width="300"/>
+  <img src="https://files.catbox.moe/zotx9t.jpg" width="300"/>
 </p>
 
 
