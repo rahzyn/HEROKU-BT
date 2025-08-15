@@ -45,5 +45,5 @@ ________________________________
 
 
 
-
+<a href="https://git.io/typing-hgm"><img src="https://readme-typing-svg.demolab.com?font=Black+adam&size=100&pause=2000&color=purple&center=true&width=1000&height=200&lines=WELCOME+AGAIN" alt="Typing HGM" /></a>
 
