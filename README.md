@@ -4,7 +4,7 @@
 <p align="center">
   <img src="https://files.catbox.moe/zotx9t.jpg" width="300"/>
 </p>
-
+<a href="https://git.io/typing-hgm"><img src="https://readme-typing-svg.demolab.com?font=Black+Ops+One&size=100&pause=1000&color=ff0000&center=true&width=1000&height=200&lines=WELCOME-TO-HEROKU-BT" alt="Typing HGM" /></a>
 
 
 #### SETUP 
@@ -13,7 +13,7 @@
 
 ________________________________
 
-- <a href="https://rahmani-4.onrender.com"><img title="SESSION SITE" src="https://img.shields.io/badge/SESSION SITE-h?color=green&style=for-the-badge&logo=msi" width="220" height="38.45"/></a></p>
+- <a href="https://heroku-1-csyv.onrender.com"><img title="SESSION SITE" src="https://img.shields.io/badge/SESSION SITE-h?color=green&style=for-the-badge&logo=msi" width="220" height="38.45"/></a></p>
 
 
 
