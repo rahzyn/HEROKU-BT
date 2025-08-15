@@ -1,10 +1,9 @@
-
-#           HEROKU - BOT
+<a href="https://git.io/typing-hgm"><img src="https://readme-typing-svg.demolab.com?font=Black+Ops+One&size=100&pause=2000&color=purple&center=true&width=1000&height=200&lines=WELCOME+TO+HEROKU-BT" alt="Typing HGM" /></a>
 
 <p align="center">
   <img src="https://files.catbox.moe/zotx9t.jpg" width="300"/>
 </p>
-<a href="https://git.io/typing-hgm"><img src="https://readme-typing-svg.demolab.com?font=Black+Ops+One&size=100&pause=2000&color=purple&center=true&width=1000&height=200&lines=WELCOME+TO+HEROKU-BT" alt="Typing HGM" /></a>
+
 
 
 #### SETUP 
