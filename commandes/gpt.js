@@ -15,7 +15,7 @@ zokou({ nomCom: "gpt", reaction: "🔥", categorie: "ai" }, async (dest, zk, com
 
     // Combine arguments into a single string
     const prompt = arg.join(' ');
-    const response = await fetch(`https://api.giftedtech.web.id/api/ai/gpt?apikey=gifted&q=${prompt}`);
+    const response = await fetch(`https://api.giftedtech.web.id/api/ai/gpt?apikey=gifted&q=Whats+Your+Model${prompt}`);
     const data = await response.json();
 
     if (data && data.response && data.response.response) {
