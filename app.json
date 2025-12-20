@@ -1,9 +1,9 @@
 {
-  "name":"TECH EXPERT MD",
-  "description":"Deploy now your bot, EXPERT-MD was developed by Meshack. Make sure you fill all valuables to avoid bot from sleeping. ",
+  "name":"HEROKU-BT",
+  "description":"Deploy and enjoy.Dont forget to fork and give star. By Rahmany😇 ",
   "keywords":["bot","node","baileys","whatsapp"],
-  "logo":"https://files.catbox.moe/s3wv2g.jpg",
-  "repository":"https://github.com/MESHACK41/TECH-EXPERT-MD",
+  "logo":"https://files.catbox.moe/zotx9t.jpg",
+  "repository":"https://github.com/rahzyn/HEROKU-BT",
   "succes_url":"/",
   "stack":"container",
   "env":{
@@ -29,7 +29,7 @@
     },
     "AUTO_BIO": {
       "description": "This automatically update your bio status.Always make sure you insert your OWNER_NAME since it uses that to update your bio name status",
-      "value": "yes",
+      "value": "no",
       "required": false
     },
       "AUTO_SAVE_CONTACTS":
@@ -45,12 +45,12 @@
     },
     "PM_PERMIT": {
       "description": "Restrict other users from using your bot in private messages (type 'yes' to activate or 'no' to deactivate; don't write in capital letters)",
-      "value": "yes",
+      "value": "no",
       "required": false
     },
     "BOT_NAME": {
       "description": "you must give a name for you bot uhh??!!",
-      "value": "✧⁠TECH-EXPERT-MD✧",
+      "value": "HEROKU-BT",
       "required": false 
     },
     "PUBLIC_MODE": {
@@ -70,12 +70,12 @@
     },
     "OWNER_NAME": {
       "description": "don't you have a name bro.Insert your name here!!",
-      "value": "Mr Meshack",
+      "value": "Rahmany",
       "required": false
     },
     "URL": {
       "description": "you must add your bot image url.Get your image url now and fill it here",
-      "value": "https://files.catbox.moe/s3wv2g.jpg",
+      "value": "https://files.catbox.moe/zotx9t.jpg",
       "required": true
     },
     "AUTO_READ_MESSAGES": {
@@ -84,18 +84,18 @@
       "required": false  
     },
     "NUMERO_OWNER": {
-      "description": "Your phone number (exclude '+' and area code, e.g., '255752593977')",
-      "value": "255711389698",
+      "description": "Your phone number (exclude '+' and area code, e.g., '255693629079')",
+      "value": "255693629079",
       "required": false
     },
     "WARN_COUNT": {
       "description": "Set the warning limit for warning commands",
-      "value": "5",
+      "value": "2",
       "required": false
     },
     "STARTING_BOT_MESSAGE": {
       "description": "Set 'yes' to display a starting bot message or 'no' to disable it",
-      "value": "yes",
+      "value": "no",
       "required": true
     },
     "PRESENCE": {
