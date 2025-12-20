@@ -1522,7 +1522,7 @@ zk.ev.on('group-participants.update', async (group) => {
                 console.log("------------------/-----");
                 console.log("RAHMANI-XMD is Online 🕸\n\n");
                 //chargement des commandes 
-                console.log("Loading Expert Commands ...\n");
+                console.log("Loading Rahmani-xmd Commands ...\n");
                 fs.readdirSync(__dirname + "/commandes").forEach((fichier) => {
                     if (path.extname(fichier).toLowerCase() == (".js")) {
                         try {
