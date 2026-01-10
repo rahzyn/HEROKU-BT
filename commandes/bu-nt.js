@@ -1,8 +1,9 @@
 const { zokou } = require("../../framework/zokou");
 
 zokou(
-  { nomCom: "antibug", categorie: "protection" },
-  async (dest, zk, { repondre, msg }) => {
+  { nomCom: "antibug", categorie: "protection",
+  }, async (dest, zk, commandeOptions) => {
+  const { repondre, auteurMessage, nomAuteurMessage } = commandeOptions;
 
     try {
       const bugPatterns = [
