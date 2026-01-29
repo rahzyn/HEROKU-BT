@@ -48,7 +48,7 @@ const date = moment().format('DD/MM/YYYY');
 ➤ https://github.com/rahzyn/HEROKU-BT
   
 ▶️ *PAIR SITE*  
-➤ https://heroku-1-csyv.onrender.com
+➤ https://heroku-pair.onrender.com
   
 ══════════════  
 🌀 *DESIGNED BY* 𝐇𝐄𝐑𝐎𝐊𝐔-𝐁𝐓
