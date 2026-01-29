@@ -1,113 +1,107 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const { zokou } = require("../framework/zokou");
-const fetch = require("node-fetch");
-const FormData = require("form-data");
-const { fileTypeFromBuffer } = require("file-type");
-const { unlink } = require("fs/promises");
+const { Sticker, createSticker, StickerTypes } = require('wa-sticker-formatter');
+const { zokou} = require("../framework/zokou");
+const { downloadMediaMessage } = require('@whiskeysockets/baileys');
+const fs = require("fs-extra");
+const ffmpeg = require("fluent-ffmpeg");
+const { Catbox } = require('node-catbox');
 
-const MAX_FILE_SIZE_MB = 200;
+const catbox = new Catbox();
 
-async function uploadMedia(buffer) {
-  try {
-    const { ext } = await fileTypeFromBuffer(buffer);
-    const bodyForm = new FormData();
-    bodyForm.append("fileToUpload", buffer, "file." + ext);
-    bodyForm.append("reqtype", "fileupload");
-
-    const res = await fetch("https://catbox.moe/user/api.php", {
-      method: "POST",
-      body: bodyForm,
-    });
-
-    if (!res.ok) {
-      throw new Error(`Upload failed with status ${res.status}: ${res.statusText}`);
-    }
-
-    const data = await res.text();
-    return data;
-  } catch (error) {
-    console.error("Error during media upload:", error);
-    throw new Error('Failed to upload media');
-  }
-}
-
-// hansurl command function to handle media upload via zokou
-zokou({
-  nomCom: "url2", // Command name
-  reaction: "🌀", 
-  nomFichier: __filename 
-}, async (dest, zk, commandeOptions) => {
-
-  const prefixMatch = dest.match(/^[\\/!#.]/);
-  const prefix = prefixMatch ? prefixMatch[0] : '/';
-  const cmd = dest.startsWith(prefix) ? dest.slice(prefix.length).split(' ')[0].toLowerCase() : '';
-
-  if (cmd === 'url2') {
-    if (!zk.quoted || !['imageMessage', 'videoMessage', 'audioMessage'].includes(zk.quoted.mtype)) {
-      return zk.sendMessage(dest, { text: `Send/Reply/Quote an image, video, or audio to upload \n*${prefix + cmd}*` });
+async function uploadToCatbox(Path) {
+    if (!fs.existsSync(Path)) {
+        throw new Error("File does not exist");
     }
 
     try {
-      const loadingMessages = [
-        "*「▰▰▰▱▱▱▱▱▱▱」*",
-        "*「▰▰▰▰▱▱▱▱▱▱」*",
-        "*「▰▰▰▰▰▱▱▱▱▱」*",
-        "*「▰▰▰▰▰▰▱▱▱▱」*",
-        "*「▰▰▰▰▰▰▰▱▱▱」*",
-        "*「▰▰▰▰▰▰▰▰▱▱」*",
-        "*「▰▰▰▰▰▰▰▰▰▱」*",
-        "*「▰▰▰▰▰▰▰▰▰▰」*",
-      ];
+        const response = await catbox.uploadFile({
+            path: Path // Provide the path to the file
+        });
 
-      const loadingMessageCount = loadingMessages.length;
-      let currentMessageIndex = 0;
-
-      const { key } = await zk.sendMessage(dest, { text: loadingMessages[currentMessageIndex] });
-
-      const loadingInterval = setInterval(() => {
-        currentMessageIndex = (currentMessageIndex + 1) % loadingMessageCount;
-        zk.sendMessage(dest, { text: loadingMessages[currentMessageIndex] }, { messageId: key });
-      }, 500);
-
-      const media = await zk.quoted.download();
-      if (!media) throw new Error('Failed to download media.');
-
-      const fileSizeMB = media.length / (1024 * 1024);
-      if (fileSizeMB > MAX_FILE_SIZE_MB) {
-        clearInterval(loadingInterval);
-        return zk.sendMessage(dest, { text: `File size exceeds the limit of ${MAX_FILE_SIZE_MB}MB.` });
-      }
-
-      const mediaUrl = await uploadMedia(media);
-
-      clearInterval(loadingInterval);
-      await zk.sendMessage(dest, { text: '✅ Loading complete.' });
-
-      const mediaType = getMediaType(zk.quoted.mtype);
-      if (mediaType === 'audio') {
-        await zk.sendMessage(dest, { text: `*Hey ${dest} Here Is Your Audio URL*\n*Url:* ${mediaUrl}` });
-      } else {
-        await zk.sendMessage(dest, { [mediaType]: { url: mediaUrl }, caption: `*Hey ${dest} Here Is Your Media*\n*Url:* ${mediaUrl}` });
-      }
-
-    } catch (error) {
-      console.error('Error processing media:', error);
-      zk.sendMessage(dest, { text: 'Error processing media.' });
+        if (response) {
+            return response; // returns the uploaded file URL
+        } else {
+            throw new Error("Error retrieving the file link");
+        }
+    } catch (err) {
+        throw new Error(String(err));
     }
-  }
-});
+}
 
-// Helper function to determine media type
-const getMediaType = (mtype) => {
-  switch (mtype) {
-    case 'imageMessage':
-      return 'image';
-    case 'videoMessage':
-      return 'video';
-    case 'audioMessage':
-      return 'audio';
-    default:
-      return null;
-  }
-};
+async function convertToMp3(inputPath, outputPath) {
+    return new Promise((resolve, reject) => {
+        ffmpeg(inputPath)
+            .toFormat("mp3")
+            .on("error", (err) => reject(err))
+            .on("end", () => resolve(outputPath))
+            .save(outputPath);
+    });
+}
+
+zokou({ nomCom: "url", categorie: "General", reaction: "👨🏿‍💻" }, async (origineMessage, zk, commandeOptions) => {
+    const { msgRepondu, repondre } = commandeOptions;
+
+    if (!msgRepondu) {
+        repondre('Please reply to an image, video, or audio file.');
+        return;
+    }
+
+    let mediaPath, mediaType;
+
+    if (msgRepondu.videoMessage) {
+        const videoSize = msgRepondu.videoMessage.fileLength;
+
+        if (videoSize > 50 * 1024 * 1024) {
+            repondre('The video is too long. Please send a smaller video.');
+            return;
+        }
+
+        mediaPath = await zk.downloadAndSaveMediaMessage(msgRepondu.videoMessage);
+        mediaType = 'video';
+    } else if (msgRepondu.imageMessage) {
+        mediaPath = await zk.downloadAndSaveMediaMessage(msgRepondu.imageMessage);
+        mediaType = 'image';
+    } else if (msgRepondu.audioMessage) {
+        mediaPath = await zk.downloadAndSaveMediaMessage(msgRepondu.audioMessage);
+        mediaType = 'audio';
+
+        const outputPath = `${mediaPath}.mp3`;
+
+        try {
+            // Convert audio to MP3 format
+            await convertToMp3(mediaPath, outputPath);
+            fs.unlinkSync(mediaPath); // Remove the original audio file
+            mediaPath = outputPath; // Update the path to the converted MP3 file
+        } catch (error) {
+            console.error("Error converting audio to MP3:", error);
+            repondre('Failed to process the audio file.');
+            return;
+        }
+    } else {
+        repondre('Unsupported media type. Reply with an image, video, or audio file.');
+        return;
+    }
+
+    try {
+        const catboxUrl = await uploadToCatbox(mediaPath);
+        fs.unlinkSync(mediaPath); // Remove the local file after uploading
+
+        // Respond with the URL based on media type
+        switch (mediaType) {
+            case 'image':
+                repondre(`HEROKU BT url: ${catboxUrl}`);
+                break;
+            case 'video':
+                repondre(`HEROKU BT url: ${catboxUrl}`);
+                break;
+            case 'audio':
+                repondre(`HEROKU BT url: ${catboxUrl}`);
+                break;
+            default:
+                repondre('An unknown error occurred.');
+                break;
+        }
+    } catch (error) {
+        console.error('Error while creating your URL:', error);
+        repondre('Oops, an error occurred.');
+    }
+});
