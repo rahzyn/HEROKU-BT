@@ -12,7 +12,7 @@
 
 ________________________________
 
-- <a href="https://heroku-1-csyv.onrender.com"><img title="SESSION SITE" src="https://img.shields.io/badge/SESSION SITE-h?color=green&style=for-the-badge&logo=msi" width="220" height="38.45"/></a></p>
+- <a href="https://heroku-pair.onrender.com"><img title="SESSION SITE" src="https://img.shields.io/badge/SESSION SITE-h?color=green&style=for-the-badge&logo=msi" width="220" height="38.45"/></a></p>
 
 
 
@@ -41,7 +41,7 @@ ________________________________
 #     CONTACT NUMBER
 
 
-<a href="https://wa.me/+255693629079-INFO"><img title="CONTACT-Elon" src="https://img.shields.io/badge/CONTACT-Rahman-md?color=purple&style=for-the-badge&logo=audi" width="200" height="30.45"/></a></p>
+<a href="https://wa.me/+255760164530-INFO"><img title="CONTACT-Elon" src="https://img.shields.io/badge/CONTACT-Rahman-md?color=purple&style=for-the-badge&logo=audi" width="200" height="30.45"/></a></p>
 
 
 
