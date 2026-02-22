@@ -1,9 +1,9 @@
 {
-  "name":"HEROKU-BT",
-  "description":"Deploy now your bot, HEROKU-BT was developed by Rahmany.. ",
+  "name":"KIBORE-XMD",
+  "description":"kibore-og",
   "keywords":["bot","node","baileys","whatsapp"],
-  "logo":"https://files.catbox.moe/zotx9t.jpg",
-  "repository":"https://github.com/rahzyn/HEROKU-BT",
+  "logo":"https://files.catbox.moe/t9jjm9.jpg",
+  "repository":"https://github.com/kibore-og/kb",
   "succes_url":"/",
   "stack":"container",
   "env":{
@@ -24,55 +24,53 @@
       "value":"no",
       "required":false
     }
-    "AUTO_REACT_STATUS": 
+    "AUTO_REACT_STATUS":
     {
       "description":"Enter yes for your bot to auto like status",
       "value":"yes",
       "required":true
-    }
+      }
     ,
      "PM_PERMIT" :
      {
       "description":"Other user can't use your bot in pm (type yes to active or no to deactive ; don't write in capital letter)",
       "value":"no",
-      "required":false
+      "required":true
     }
     ,
     "BOT_NAME" : {
        
       "description":"put A name for your bot",
-      "value":" HEROKU-BT",
+      "value":"𝗞𝗜𝗕𝗢𝗥𝗘 𝗠𝗗",
       "required":false
 
     } ,
      "BOT_MENU_LINKS" : {
     
       "description":"add one or many link for your bot menu  ; eg : url1,url2,url3.....",
-      "value":"https://files.catbox.moe/zotx9t.jpg",
+      "value":"https://files.catbox.moe/t9jjm9.jpg",
       "required":false
        
      },
     "PUBLIC_MODE":
     {
       "description":"type yes to put your bot on public mode or no to put it on private mod",
-      "value":"yes",
-      "required":false
+      "value":"no",
+      "required": true 
     }
 	,
     "HEROKU_APY_KEY": {
-    "description": "insert your heroku api-key ",
-     "value":"",
-	"required" :true
+    "description": "insert your heroku api-key (this is optionnal)",
+     "required" :true
     },
   "HEROKU_APP_NAME": {
-    "description": "insert your heroku APP NAME (the name you wrote at the beginning)",
-     "value":"",
-	"required" :true
+    "description": "insert your heroku APP NAME (this is optionnal)",
+     "required" :true
     }  
 	  ,
     "SESSION_ID":
     {
-      "description":"put your session ID, the code you received after pairing code",   
+      "description":"put your session ID , the code you receive after scanning Qr code",   
       "value":"",
       "required":true
       
@@ -82,14 +80,14 @@
     
     "desc": "Your Name",
     "required": false,
-    "value": "Rahmany"
+    "value": " 𝐑𝐚𝐡𝐦𝐚𝐧𝐢"
   },
     "NUMERO_OWNER":
   {
     
     "desc": "Your number , dont put '+' and put you area code(exemple of togo '228')",
     "required":false,
-    "value": "255760164530"
+    "value": "255693629079"
   },
     "WARN_COUNT":
   {
@@ -105,13 +103,13 @@
   },
   "PRESENCE":{
     "description":"Mark your presence: 1 to indicate that you are online even if you are not. 2 to indicate that you are currently typing a message. 3 to indicate that you are currently recording an audio. Or leave the field blank to indicate your real state.",
-    "value":"2",  
-    "required": false
+    "value":"1",
+    "required": true 
   },
   "ANTI_DELETE_MESSAGE" : {
     "description": "if you want to enable anti delete message put yes else put no",
-    "value": "yes",
-    "required": false
+    "value": "no",
+    "required": true 
   }
   },
 
@@ -124,8 +122,7 @@
 
   "addons":[
     {
-      "plan":"heroku-postgresql:essential-0"
+      "plan":"heroku-postgresql"
     }
   ]
-	
 }
