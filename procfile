@@ -1,4 +1,4 @@
 
 
 
-web: node Rahmany.js && node Rahmany.js
+web: node index.js && node index.js
