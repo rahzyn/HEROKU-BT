@@ -1,4 +1,18 @@
+web: npm start || yarn start
 
 
 
-web: node index.js && node index.js
+# node index.js
+
+
+
+
+
+
+
+
+
+
+
+
+# Creator: Rahman 
