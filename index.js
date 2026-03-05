@@ -54,7 +54,7 @@ const more = String.fromCharCode(8206)
 const readmore = more.repeat(4001)
 
 // Custom Baileys version URL
-const CUSTOM_BAILEYS_VERSION_URL = 'https://raw.githubusercontent.com/xhclintohn/Baileys/main/lib/Defaults/baileys-version.json';
+const CUSTOM_BAILEYS_VERSION_URL = 'https://raw.githubusercontent.com/WhiskeySockets/Baileys/master/src/Defaults/baileys-version.json';
 
 async function authentification() {
     try {
