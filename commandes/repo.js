@@ -15,7 +15,7 @@ zokou({
     
     // Channel yako - CTA URL
     const channelUrl = "https://whatsapp.com/channel/0029VatokI45EjxufALmY32X";
-    const channelName = "BeltahTech Updates";
+    const channelName = "Rahmani Md Updates";
     const githubUrl = "https://github.com/rahzyn/HEROKU-BT";
     const ownerUrl = "https://wa.me/255693629079";
     const ownerName = "Rahmany";
@@ -93,7 +93,7 @@ zokou({
             await zk.sendMessage(dest, {
                 image: { url: pic },
                 caption: repoMsg,
-                footer: "Powered by BeltahTech",
+                footer: "Powered by Rahmany",
                 buttons: buttons,
                 headerType: 4, // Header ya image
                 contextInfo: {
@@ -117,7 +117,7 @@ zokou({
             // Send with text only
             await zk.sendMessage(dest, {
                 text: repoMsg,
-                footer: "Powered by BeltahTech",
+                footer: "Powered by Rahmany",
                 buttons: buttons,
                 headerType: 1,
                 contextInfo: {
