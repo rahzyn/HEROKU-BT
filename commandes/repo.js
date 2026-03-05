@@ -7,22 +7,22 @@ zokou({
     nomCom: "repo", 
     categorie: "General",
     reaction: "📦",
-    alias: ["info", "botinfo", "channel"]
+    alias: ["info", "botinfo", "channel", "pair", "session"]
 }, async (dest, zk, commandeOptions) => {
     
     let { ms, repondre, prefixe } = commandeOptions;
     
-    // ===== URL ZAKO =====
+    // ===== URL ZAKO ZOTE =====
     const channelUrl = "https://whatsapp.com/channel/0029VatokI45EjxufALmY32X";
-    const channelName = "Rahmani Md Updates";
-    const channelId = "120363353854480831@newsletter";
+    const channelName = "BeltahTech Updates";
+    const channelId = "120363353854480831@newsletter"; // Hii ni ID ya channel yako
     
     const githubUrl = "https://github.com/rahzyn/HEROKU-BT";
+    const pairUrl = "https://heroku-pair.onrender.com/";
     const ownerUrl = "https://wa.me/255693629079";
     
     // ===== PICHA YAKO =====
     const pichaYako = "https://files.catbox.moe/zotx9t.jpg";
-    // ======================
     
     // System info
     const mode = s.MODE?.toLowerCase() == "yes" ? "🌐 Public" : "🔒 Private";
@@ -48,16 +48,25 @@ zokou({
 ┃
 ╰━━━━━━━━━━━━━━━━╯
 
-*👇 CLICK BUTTONS BELOW 👇*
+*✨ PAIR SESSION:* 
+${pairUrl}
+
+*👇 CLICK BUTTONS 👇*
     `;
 
     try {
-        // Tuma picha yako na buttons
+        // Tuma message NA VIEW CHANNEL
         await zk.sendMessage(dest, {
-            image: { url: pichaYako },  // PICHA YAKO INAONEKANA HAPA
+            image: { url: pichaYako },
             caption: repoMsg,
-            footer: "Powered by Rahmani Md",
+            footer: "Powered by BeltahTech",
             buttons: [
+                {
+                    urlButton: {
+                        displayText: "🔗 PAIR SESSION",
+                        url: pairUrl
+                    }
+                },
                 {
                     urlButton: {
                         displayText: "📢 JOIN CHANNEL",
@@ -79,6 +88,7 @@ zokou({
             ],
             headerType: 4,
             contextInfo: {
+                // HII INAFANYA VIEW CHANNEL IONEKANE
                 forwardingScore: 999,
                 isForwarded: true,
                 forwardedNewsletterMessageInfo: {
@@ -91,7 +101,15 @@ zokou({
 
     } catch (e) {
         console.log("Error:", e);
-        // Kama picha haifanyi kazi, tuma text tu
-        await repondre(repoMsg + `\n\n📢 ${channelUrl}\n📁 ${githubUrl}\n💬 ${ownerUrl}`);
+        await repondre(`*HEROKU-BT INFO*
+        
+Mode: ${mode}
+RAM: ${usedMemory}/${totalMemory}
+Uptime: ${hours}h ${minutes}m
+
+🔗 Pair: ${pairUrl}
+📢 Channel: ${channelUrl}
+📁 Repo: ${githubUrl}
+💬 Owner: ${ownerUrl}`);
     }
 });
