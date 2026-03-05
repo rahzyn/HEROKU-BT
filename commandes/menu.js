@@ -9,7 +9,7 @@ const more = String.fromCharCode(8206);
 const readmore = more.repeat(4001);
 
 zokou({ nomCom: "menu", categorie: "General" }, async (dest, zk, commandOptions) => {
-    let { ms, repondre, prefixe, nomAuteurMessage, mybotpic } = commandOptions;
+    let { ms, repondre, prefixe, nomAuteurMessage } = commandOptions;
     let { cm } = require(__dirname + "/../framework/zokou");
 
     var commands = {};
@@ -55,41 +55,47 @@ zokou({ nomCom: "menu", categorie: "General" }, async (dest, zk, commandOptions)
     for (const category in commands) {
         fullMenu += ` ╭─────❒ *${category}* ✣`;
         for (const cmd of commands[category]) {
-            fullMenu += `\n││▸ ${cmd}`;
+            fullMenu += `\n││▸ ${prefixe + cmd}`; // Imeongezwa prefix
         }
         fullMenu += `\n╰───────────────▸▸ \n`;
     }
-       let imageUrl = "https://files.catbox.moe/zotx9t.jpg";
-       
+    
     fullMenu += `> BOT CREATED BY Rahmani\n`;
 
-    const imageOrVideoUrl = mybotpic();
+    // Tafuta picha ya bot - kama ipo kwenye s.BOTPIC
+    let imageUrl = s.BOTPIC || "https://files.catbox.moe/zotx9t.jpg";
+    
+    // Angalia kama mybotpic ipo kwenye commandOptions na ni function
+    let botPicUrl = imageUrl;
+    if (commandOptions.mybotpic && typeof commandOptions.mybotpic === 'function') {
+        try {
+            botPicUrl = await commandOptions.mybotpic() || imageUrl;
+        } catch (e) {
+            console.log("Error getting bot pic:", e);
+            botPicUrl = imageUrl;
+        }
+    }
+
     const musicUrl = "https://files.catbox.moe/uv6fb5.mp3";
 
     try {
-        // If it's a video or gif
-        if (imageOrVideoUrl.match(/\.(mp4|gif)$/i)) {
-            await zk.sendMessage(dest, {
-                video: { url: imageOrVideoUrl },
-                caption: headerMessage + fullMenu,
-                footer: "HEROKU*, developed by Rahmani",
-                gifPlayback: true
-            }, { quoted: ms });
-        } 
-        // If it's a static image
-        else if (imageOrVideoUrl.match(/\.(jpeg|png|jpg)$/i)) {
-            await zk.sendMessage(dest, {
-                image: { url: imageOrVideoUrl },
-                caption: headerMessage + fullMenu,
-                footer: "HEROKU*, developed by Rahmani"
-            }, { quoted: ms });
-        } 
-        // If none of the above, send text only
-        else {
-            await repondre(headerMessage + fullMenu);
-        }
+        // Send menu with image
+        await zk.sendMessage(dest, {
+            image: { url: botPicUrl },
+            caption: headerMessage + fullMenu,
+            contextInfo: {
+                forwardingScore: 999,
+                isForwarded: true,
+                forwardedNewsletterMessageInfo: {
+                    newsletterJid: '120363317350679391@newsletter',
+                    newsletterName: "HEROKU-BT",
+                    serverMessageId: -1
+                }
+            }
+        }, { quoted: ms });
 
-        // Send background music after menu
+        // Send background music after menu (optional)
+        // Unaweza kuondoa hii kama hutaki muziki
         await zk.sendMessage(dest, {
             audio: { url: musicUrl },
             mimetype: 'audio/mp4',
@@ -98,6 +104,7 @@ zokou({ nomCom: "menu", categorie: "General" }, async (dest, zk, commandOptions)
 
     } catch (error) {
         console.log("🥵🥵 Menu error: " + error);
-        repondre("🥵🥵 Menu error: " + error);
+        // Tuma text tu kama kuna error na image
+        await repondre(headerMessage + fullMenu);
     }
 });
