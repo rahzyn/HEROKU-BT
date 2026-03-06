@@ -49,7 +49,7 @@
      "BOT_MENU_LINKS" : {
     
       "description":"add one or many link for your bot menu  ; eg : url1,url2,url3.....",
-      "value":"ttps://files.catbox.moe/ejm45q.jpg",
+      "value":"https://files.catbox.moe/ejm45q.jpg",      // 👈 Imeongezwa "http" iliyokosekana
       "required":false
        
      },
@@ -81,7 +81,7 @@
     
     "desc": "Your Name",
     "required": false,
-    "value": " Rahmany"
+    "value": "Rahmany"      // 👈 Imeondolewa space kabla ya Rahmany
   },
     "NUMERO_OWNER":
   {
