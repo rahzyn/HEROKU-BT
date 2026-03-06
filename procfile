@@ -1,18 +1,2 @@
-web: npm start || yarn start
 
-
-
-# node index.js
-
-
-
-
-
-
-
-
-
-
-
-
-# Creator: Rahman 
+worker: node --max-old-space-size=512 index.js
