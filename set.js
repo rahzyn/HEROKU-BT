@@ -11,9 +11,9 @@ module.exports = { session: process.env.SESSION_ID || 'zokk',
     PREFIXE: process.env.PREFIX || "+",
     OWNER_NAME: process.env.OWNER_NAME || " chugastan",
     NUMERO_OWNER : process.env.NUMERO_OWNER || "255693629079",              
-    AUTO_READ_STATUS: process.env.AUTO_READ_STATUS || "non",
-    AUTO_REACT_STATUS : process.env.AUTO_REACT_STATUS || 'yes',
-    AUTO_DOWNLOAD_STATUS: process.env.AUTO_DOWNLOAD_STATUS || 'non',
+    AUTO_READ_STATUS: process.env.AUTO_READ_STATUS || "yes",            // 👈 Ibadilishe kuwa "yes"
+    AUTO_REACT_STATUS : process.env.AUTO_REACT_STATUS || 'yes',         // 👈 Hii tayari "yes" (sawa)
+    AUTO_DOWNLOAD_STATUS: process.env.AUTO_DOWNLOAD_STATUS || 'no',     // 👈 Weka "no" kama hutaki spam
     BOT : process.env.BOT_NAME || 'HEROKU-BT',
     URL : process.env.BOT_MENU_LINKS || 'https://files.catbox.moe/zotx9t.jpg',
     MODE: process.env.PUBLIC_MODE || "no",
@@ -21,7 +21,7 @@ module.exports = { session: process.env.SESSION_ID || 'zokk',
     HEROKU_APP_NAME : process.env.HEROKU_APP_NAME,
     HEROKU_APY_KEY : process.env.HEROKU_APY_KEY ,
     WARN_COUNT : process.env.WARN_COUNT || '3' ,
-    ETAT : process.env.PRESENCE || '1',
+    ETAT : process.env.PRESENCE || '1',                                 // 👈 1 = online, 2 = typing, 3 = recording
     CHATBOT : process.env.PM_CHATBOT || 'no',
     DP : process.env.STARTING_BOT_MESSAGE || "yes",
     ADM : process.env.ANTI_DELETE_MESSAGE || 'yes',
