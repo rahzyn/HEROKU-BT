@@ -3,7 +3,7 @@ const { getContentType } = require("@whiskeysockets/baileys");
 const fs = require('fs');
 
 zokou({ 
-  nomCom: "vv2", 
+  nomCom: "vv1", 
   aliases: ["viewonce", "keep", "view"], 
   categorie: "General", 
   reaction: "💚" 
