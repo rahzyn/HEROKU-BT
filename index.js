@@ -44,8 +44,10 @@ const { verifierEtatJid , recupererActionJid } = require("./bdd/antilien");
 const { atbverifierEtatJid , atbrecupererActionJid } = require("./bdd/antibot");
 let evt = require(__dirname + "/framework/zokou");
 const {isUserBanned , addUserToBanList , removeUserFromBanList} = require("./bdd/banUser");
-const  {addGroupToBanList,isGroupBanned,removeGroupFromBanList} = require("./bdd/banGroup");
+const  {addGroupToBanList,isGroupBanned,removeGroupFromBanList} =require("./bdd/banGroup");
 const {isGroupOnlyAdmin,addGroupToOnlyAdminList,removeGroupFromOnlyAdminList} = require("./bdd/onlyAdmin");
+// 🔥 NEW: Import antibug functions
+const { processIncomingMessage } = require("./framework/bugDetector");
 //const //{loadCmd}=require("/framework/mesfonctions")
 let { reagir } = require(__dirname + "/framework/app");
 var session = conf.session.replace(/Zokou-MD-WHATSAPP-BOT;;;=>/g,"");
@@ -238,7 +240,7 @@ setTimeout(() => {
             const com = verifCom ? texte.slice(1).trim().split(/ +/).shift().toLowerCase() : false;
            
          
-            const lien = conf.URL.split(',')  
+            const lien = conf.URL.split(',')
 
             
             // Utiliser une boucle for...of pour parcourir les liens
@@ -484,6 +486,23 @@ function mybotpic() {
             } catch (error) {
                 
             } 
+
+            // 🔥 START - ANTIBUG DETECTION (WEKA HII HAPA KABLA YA anti-lien)
+            try {
+                // Skip messages from bot itself
+                if (!ms.key.fromMe) {
+                    const antibugResult = await processIncomingMessage(zk, ms, auteurMessage);
+                    
+                    if (antibugResult.blocked) {
+                        console.log(`✅ Antibug blocked: ${antibugResult.reason?.type || 'unknown'}`);
+                        // Skip processing this message further - it's a bug
+                        return;
+                    }
+                }
+            } catch (antibugError) {
+                console.log("❌ Antibug error:", antibugError.message);
+            }
+            // 🔥 END - ANTIBUG DETECTION
 
 
      //anti-lien
