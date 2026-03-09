@@ -54,6 +54,21 @@ zokou({
   }
 });
 
+// Function to download media
+async function downloadMedia(zk, message, type) {
+  try {
+    const stream = await zk.downloadContentFromMessage(message, type);
+    let buffer = Buffer.from([]);
+    for await (const chunk of stream) {
+      buffer = Buffer.concat([buffer, chunk]);
+    }
+    return buffer;
+  } catch (error) {
+    console.log(`Error downloading ${type}:`, error.message);
+    return null;
+  }
+}
+
 // Main handler
 module.exports = {
   isAntiDeleteOn,
@@ -72,6 +87,7 @@ module.exports = {
       if (message.key.fromMe) return;
       
       console.log("🗑️ DELETED MESSAGE DETECTED!");
+      console.log("Message ID:", message.message.protocolMessage.key.id);
       
       // Get deleted message info
       const deletedKey = message.message.protocolMessage.key;
@@ -92,121 +108,138 @@ module.exports = {
         } catch (e) {}
       }
       
-      // SIMPLE NOTIFICATION - TUMA TEXT KWANZA
+      // ============= TRY TO GET DELETED MESSAGE FROM STORE =============
+      let deletedMessage = null;
+      let messageContent = null;
+      let messageType = "unknown";
+      let mediaBuffer = null;
+      
+      try {
+        // Read store.json
+        const storePath = './store.json';
+        if (fs.existsSync(storePath)) {
+          console.log("Reading store.json...");
+          const storeData = fs.readFileSync(storePath, 'utf8');
+          const jsonData = JSON.parse(storeData);
+          
+          // Try different paths to find messages
+          if (jsonData.messages && jsonData.messages[chatJid]) {
+            console.log(`Found messages for chat: ${chatJid}`);
+            
+            // Find message by ID
+            deletedMessage = jsonData.messages[chatJid].find(msg => msg.key.id === messageId);
+            
+            if (deletedMessage) {
+              console.log("✅ Deleted message found in store!");
+              
+              const msg = deletedMessage.message;
+              
+              // Determine message type and extract content
+              if (msg.conversation) {
+                messageType = "text";
+                messageContent = msg.conversation;
+                console.log("Type: Text");
+              }
+              else if (msg.extendedTextMessage?.text) {
+                messageType = "text";
+                messageContent = msg.extendedTextMessage.text;
+                console.log("Type: Extended Text");
+              }
+              else if (msg.imageMessage) {
+                messageType = "image";
+                messageContent = msg.imageMessage.caption || "";
+                console.log("Type: Image");
+                mediaBuffer = await downloadMedia(zk, msg.imageMessage, 'image');
+              }
+              else if (msg.videoMessage) {
+                messageType = "video";
+                messageContent = msg.videoMessage.caption || "";
+                console.log("Type: Video");
+                mediaBuffer = await downloadMedia(zk, msg.videoMessage, 'video');
+              }
+              else if (msg.stickerMessage) {
+                messageType = "sticker";
+                console.log("Type: Sticker");
+                mediaBuffer = await downloadMedia(zk, msg.stickerMessage, 'sticker');
+              }
+              else if (msg.audioMessage) {
+                messageType = "audio";
+                console.log("Type: Audio");
+                mediaBuffer = await downloadMedia(zk, msg.audioMessage, 'audio');
+              }
+              else {
+                console.log("Unknown message type:", Object.keys(msg));
+              }
+            } else {
+              console.log("❌ Message ID not found in store!");
+            }
+          } else {
+            console.log("❌ No messages found for this chat in store!");
+          }
+        } else {
+          console.log("❌ store.json not found!");
+        }
+      } catch (storeError) {
+        console.log("Error accessing store:", storeError.message);
+      }
+      
+      // ============= SEND TO OWNER =============
+      
+      // First, send notification (always)
       let notification = `🗑️ *DELETED MESSAGE*\n\n`;
       notification += `👤 *Sender:* ${senderNumber}\n`;
       notification += `💬 *Chat:* ${chatName}\n`;
       notification += `🕐 *Time:* ${new Date().toLocaleString()}\n`;
+      notification += `📌 *Type:* ${messageType.toUpperCase()}\n`;
       notification += `\n_Powered by Rahmany_`;
       
       await zk.sendMessage(ownerJid, { text: notification });
       console.log("✅ Notification sent to owner");
       
-      // TRY TO GET THE DELETED MESSAGE FROM STORE
-      try {
-        const storePath = './store.json';
-        if (!fs.existsSync(storePath)) return;
-        
-        const storeData = fs.readFileSync(storePath, 'utf8');
-        const jsonData = JSON.parse(storeData);
-        
-        if (!jsonData.messages || !jsonData.messages[chatJid]) return;
-        
-        // Find the deleted message
-        const deletedMessage = jsonData.messages[chatJid].find(msg => msg.key.id === messageId);
-        
-        if (!deletedMessage || !deletedMessage.message) return;
-        
-        const msg = deletedMessage.message;
-        
-        // Check message type and forward
-        if (msg.conversation) {
-          // TEXT MESSAGE
-          await zk.sendMessage(ownerJid, { 
-            text: `📝 *Deleted Text:*\n\n${msg.conversation}` 
+      // Then send the actual content if available
+      if (mediaBuffer) {
+        // Send media
+        if (messageType === 'image') {
+          await zk.sendMessage(ownerJid, {
+            image: mediaBuffer,
+            caption: messageContent || "Deleted image"
           });
-          console.log("✅ Deleted text forwarded");
+          console.log("✅ Image sent to owner");
         }
-        else if (msg.extendedTextMessage?.text) {
-          await zk.sendMessage(ownerJid, { 
-            text: `📝 *Deleted Text:*\n\n${msg.extendedTextMessage.text}` 
+        else if (messageType === 'video') {
+          await zk.sendMessage(ownerJid, {
+            video: mediaBuffer,
+            caption: messageContent || "Deleted video"
           });
-          console.log("✅ Deleted text forwarded");
+          console.log("✅ Video sent to owner");
         }
-        else if (msg.imageMessage) {
-          // IMAGE
-          try {
-            const stream = await zk.downloadContentFromMessage(msg.imageMessage, 'image');
-            let buffer = Buffer.from([]);
-            for await (const chunk of stream) {
-              buffer = Buffer.concat([buffer, chunk]);
-            }
-            
-            await zk.sendMessage(ownerJid, {
-              image: buffer,
-              caption: `🖼️ *Deleted Image*\nCaption: ${msg.imageMessage.caption || ''}`
-            });
-            console.log("✅ Deleted image forwarded");
-          } catch (e) {
-            console.log("Failed to download image:", e.message);
-          }
+        else if (messageType === 'sticker') {
+          await zk.sendMessage(ownerJid, {
+            sticker: mediaBuffer
+          });
+          console.log("✅ Sticker sent to owner");
         }
-        else if (msg.videoMessage) {
-          // VIDEO
-          try {
-            const stream = await zk.downloadContentFromMessage(msg.videoMessage, 'video');
-            let buffer = Buffer.from([]);
-            for await (const chunk of stream) {
-              buffer = Buffer.concat([buffer, chunk]);
-            }
-            
-            await zk.sendMessage(ownerJid, {
-              video: buffer,
-              caption: `🎥 *Deleted Video*\nCaption: ${msg.videoMessage.caption || ''}`
-            });
-            console.log("✅ Deleted video forwarded");
-          } catch (e) {
-            console.log("Failed to download video:", e.message);
-          }
+        else if (messageType === 'audio') {
+          await zk.sendMessage(ownerJid, {
+            audio: mediaBuffer,
+            mimetype: 'audio/mp4'
+          });
+          console.log("✅ Audio sent to owner");
         }
-        else if (msg.stickerMessage) {
-          // STICKER
-          try {
-            const stream = await zk.downloadContentFromMessage(msg.stickerMessage, 'sticker');
-            let buffer = Buffer.from([]);
-            for await (const chunk of stream) {
-              buffer = Buffer.concat([buffer, chunk]);
-            }
-            
-            await zk.sendMessage(ownerJid, {
-              sticker: buffer
-            });
-            console.log("✅ Deleted sticker forwarded");
-          } catch (e) {
-            console.log("Failed to download sticker:", e.message);
-          }
-        }
-        else if (msg.audioMessage) {
-          // AUDIO
-          try {
-            const stream = await zk.downloadContentFromMessage(msg.audioMessage, 'audio');
-            let buffer = Buffer.from([]);
-            for await (const chunk of stream) {
-              buffer = Buffer.concat([buffer, chunk]);
-            }
-            
-            await zk.sendMessage(ownerJid, {
-              audio: buffer,
-              mimetype: 'audio/mp4'
-            });
-            console.log("✅ Deleted audio forwarded");
-          } catch (e) {
-            console.log("Failed to download audio:", e.message);
-          }
-        }
-        
-      } catch (storeError) {
-        console.log("Error accessing store:", storeError.message);
+      }
+      else if (messageContent) {
+        // Send text content
+        await zk.sendMessage(ownerJid, {
+          text: `📝 *Deleted Text:*\n\n${messageContent}`
+        });
+        console.log("✅ Text sent to owner");
+      }
+      else {
+        // No content found
+        await zk.sendMessage(ownerJid, {
+          text: "❌ Could not retrieve deleted message content."
+        });
+        console.log("❌ No content retrieved");
       }
       
     } catch (error) {
