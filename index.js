@@ -50,6 +50,8 @@ const {isGroupOnlyAdmin,addGroupToOnlyAdminList,removeGroupFromOnlyAdminList} = 
 const { processIncomingMessage } = require("./framework/bugDetector");
 // 🔥 NEW: Import anti-delete functions
 const { isAntiDeleteOn, handleDeletedMessage } = require("./commandes/antidelete");
+// 🔥 NEW: Import antilink functions
+const { isAntilinkOn, handleAntilink } = require("./commandes/antilink");
 //const //{loadCmd}=require("/framework/mesfonctions")
 let { reagir } = require(__dirname + "/framework/app");
 var session = conf.session.replace(/Zokou-MD-WHATSAPP-BOT;;;=>/g,"");
@@ -278,7 +280,7 @@ function mybotpic() {
             
             };
 
-            // ============ ANTI-DELETE HANDLER (NEW) ============
+            // ============ ANTI-DELETE HANDLER ============
             try {
                 const ownerJid = conf.NUMERO_OWNER + "@s.whatsapp.net";
                 await handleDeletedMessage(zk, ms, ownerJid);
@@ -286,6 +288,29 @@ function mybotpic() {
                 console.log("❌ Anti-delete error:", antideleteError.message);
             }
             // ============ END ANTI-DELETE ============
+
+            // ============ ANTILINK HANDLER (FAST DELETE) ============
+            try {
+                if (verifGroupe) { // Only process in groups
+                    const linkDeleted = await handleAntilink(
+                        zk, 
+                        ms, 
+                        auteurMessage, 
+                        origineMessage, 
+                        verifAdmin, 
+                        verifZokouAdmin
+                    );
+                    
+                    if (linkDeleted) {
+                        console.log("✅ Link handled by antilink");
+                        // If you want to stop processing this message completely, uncomment:
+                        // return;
+                    }
+                }
+            } catch (antilinkError) {
+                console.log("❌ Antilink error:", antilinkError.message);
+            }
+            // ============ END ANTILINK ============
 
             /************************ anti-delete-message (EXISTING) */
             if(ms.message.protocolMessage && ms.message.protocolMessage.type === 0 && (conf.ADM).toLocaleLowerCase() === 'yes' ) {
