@@ -8,9 +8,9 @@ zokou({
 }, async (dest, zk, commandeOptions) => {
   const { repondre } = commandeOptions;
   
-  const repoMessage = `╔══════════════════════════════════╗
+  const repoMessage = `╔════════════════════════════╗
 ║       📁 HEROKU-BT REPO 📁       ║
-╠══════════════════════════════════╣
+╠════════════════════════════╣
 ║                                   
 ║  📌 *REPOSITORY INFORMATION*      
 ║  • 📁 Name: HEROKU-BT             
@@ -37,7 +37,7 @@ zokou({
 ║  https://github.com/rahzyn/        
 ║  HEROKU-BT&size=200               
 ║                                   
-╚══════════════════════════════════╝
+╚════════════════════════════╝
      Powered with ❤️ by Rahmany`;
 
   await repondre(repoMessage);
