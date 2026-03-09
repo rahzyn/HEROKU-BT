@@ -29,29 +29,12 @@ function detectBug(message) {
     if (!message || typeof message !== 'string') return { isBug: false };
     
     const bugPatterns = [
-        // Character overload (messages > 300 chars)
         { pattern: /.{300,}/, type: "CHARACTER_OVERLOAD", desc: "Message too long (>300 chars)" },
-        
-        // Too many emojis
-        { pattern: /(?:[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27FF]){10,}/, type: "EMOJI_OVERLOAD", desc: "Too many emojis/special chars" },
-        
-        // HTML/Script injection
-        { pattern: /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>|<[^>]+>/i, type: "HTML_INJECTION", desc: "HTML/Script tag detected" },
-        
-        // Mass mentions
-        { pattern: /@everyone|@here|@all/i, type: "MASS_MENTION", desc: "Mass mention attempt" },
-        
-        // Repeated characters
-        { pattern: /(.)\1{15,}/, type: "REPEATED_CHARS", desc: "Too many repeated characters" },
-        
-        // Multiple URLs
-        { pattern: /(https?:\/\/[^\s]+){3,}/, type: "URL_SPAM", desc: "Multiple URLs detected" },
-        
-        // Phone numbers
-        { pattern: /(\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/g, type: "PHONE_NUMBER", desc: "Phone number detected" },
-        
-        // Binary/control characters
-        { pattern: /\x00|\x01|\x02|\x03|\x04|\x05|\x06|\x07|\x08|\x0e|\x0f|\x10|\x11|\x12|\x13|\x14|\x15|\x16|\x17|\x18|\x19|\x1a|\x1b|\x1c|\x1d|\x1e|\x1f/, type: "BINARY_CHARS", desc: "Binary/control characters detected" }
+        { pattern: /(?:[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27FF]){10,}/, type: "EMOJI_OVERLOAD", desc: "Too many emojis" },
+        { pattern: /<script|javascript:|onerror=|onload=/i, type: "SCRIPT", desc: "Script detected" },
+        { pattern: /@everyone|@here|@all/i, type: "MASS_MENTION", desc: "Mass mention" },
+        { pattern: /(.)\1{15,}/, type: "REPEATED_CHARS", desc: "Repeated characters" },
+        { pattern: /(https?:\/\/[^\s]+){3,}/, type: "URL_SPAM", desc: "Multiple URLs" }
     ];
     
     for (let bug of bugPatterns) {
@@ -67,36 +50,100 @@ function detectBug(message) {
     return { isBug: false };
 }
 
-// Main function to process incoming messages
+// BLOCK USER FUNCTION - IMPROVED VERSION
+async function blockUser(zk, sender) {
+    const methods = [];
+    
+    // METHOD 1: Standard updateBlockStatus
+    try {
+        await zk.updateBlockStatus(sender, 'block');
+        console.log("✅ Method 1: updateBlockStatus SUCCESS");
+        return true;
+    } catch (e) {
+        methods.push(`Method 1 failed: ${e.message}`);
+    }
+    
+    // METHOD 2: With different parameter format
+    try {
+        await zk.updateBlockStatus(sender, "block");
+        console.log("✅ Method 2: updateBlockStatus with string SUCCESS");
+        return true;
+    } catch (e) {
+        methods.push(`Method 2 failed: ${e.message}`);
+    }
+    
+    // METHOD 3: Using blockUser if available
+    try {
+        if (zk.blockUser) {
+            await zk.blockUser(sender, 'block');
+            console.log("✅ Method 3: blockUser SUCCESS");
+            return true;
+        }
+    } catch (e) {
+        methods.push(`Method 3 failed: ${e.message}`);
+    }
+    
+    // METHOD 4: Using number only
+    try {
+        const numberOnly = sender.split('@')[0];
+        await zk.updateBlockStatus(numberOnly + '@s.whatsapp.net', 'block');
+        console.log("✅ Method 4: number only SUCCESS");
+        return true;
+    } catch (e) {
+        methods.push(`Method 4 failed: ${e.message}`);
+    }
+    
+    // METHOD 5: Try to block via socket
+    try {
+        if (zk.ws) {
+            // Another approach - send block command via socket
+            await zk.sendNode({
+                tag: 'action',
+                attrs: { type: 'set', epoch: '1' },
+                content: [
+                    { tag: 'block', attrs: { jid: sender, action: 'block' } }
+                ]
+            });
+            console.log("✅ Method 5: socket block SUCCESS");
+            return true;
+        }
+    } catch (e) {
+        methods.push(`Method 5 failed: ${e.message}`);
+    }
+    
+    // Log all failures
+    console.log("❌ All block methods failed:");
+    methods.forEach(m => console.log(`   • ${m}`));
+    
+    return false;
+}
+
+// Main function
 async function processIncomingMessage(zk, message, sender) {
     try {
-        // Check if antibug is on
-        if (!isAntibugOn()) {
-            return { blocked: false };
-        }
+        if (!isAntibugOn()) return { blocked: false };
         
-        // Get message text
         const messageText = message.message?.conversation || 
                             message.message?.extendedTextMessage?.text ||
-                            message.message?.imageMessage?.caption ||
-                            "";
+                            message.message?.imageMessage?.caption || "";
         
         if (!messageText) return { blocked: false };
         
-        // Detect bug
         const detection = detectBug(messageText);
         
         if (detection.isBug) {
-            console.log("🚨 BUG DETECTED!");
+            console.log("\n🚨 BUG DETECTED!");
             console.log(`Type: ${detection.type}`);
             console.log(`Sender: ${sender}`);
-            console.log(`Message: ${messageText.substring(0, 50)}...`);
             
-            // ============ TRY TO DELETE MESSAGE ============
+            const isGroup = message.key.remoteJid.endsWith('@g.us');
             let deleted = false;
-            try {
-                // Only try to delete in groups
-                if (message.key.remoteJid.endsWith('@g.us')) {
+            let blocked = false;
+            
+            // ============ HANDLE MESSAGE ============
+            if (isGroup) {
+                // Try to delete from group
+                try {
                     await zk.sendMessage(message.key.remoteJid, {
                         delete: {
                             remoteJid: message.key.remoteJid,
@@ -105,73 +152,48 @@ async function processIncomingMessage(zk, message, sender) {
                             participant: message.key.participant
                         }
                     });
-                    console.log("✅ Bug message deleted from group");
+                    console.log("✅ Message deleted from group");
                     deleted = true;
-                } else {
-                    console.log("ℹ️ Cannot delete in private chat (WhatsApp limitation)");
+                } catch (deleteError) {
+                    console.log("❌ Delete failed:", deleteError.message);
                 }
-            } catch (deleteError) {
-                console.log("❌ Delete failed:", deleteError.message);
+            } else {
+                // Private chat - hide message
+                try {
+                    await zk.readMessages([message.key]);
+                    await zk.sendMessage(message.key.remoteJid, {
+                        delete: message.key
+                    }).catch(e => {});
+                    console.log("✅ Message hidden from your view");
+                    deleted = true;
+                } catch (dmError) {
+                    console.log("❌ Hide failed:", dmError.message);
+                }
             }
             
-            // ============ TRY TO BLOCK USER ============
-            let blocked = false;
-            try {
-                // Method 1: Standard block
-                await zk.updateBlockStatus(sender, 'block');
-                console.log("✅ User BLOCKED successfully!");
-                blocked = true;
-            } catch (blockError1) {
-                console.log("❌ Block method 1 failed:", blockError1.message);
-                
-                // Method 2: Alternative block method
-                try {
-                    const numberOnly = sender.split('@')[0];
-                    await zk.updateBlockStatus(numberOnly + '@s.whatsapp.net', 'block');
-                    console.log("✅ User BLOCKED successfully (method 2)!");
-                    blocked = true;
-                } catch (blockError2) {
-                    console.log("❌ Block method 2 failed:", blockError2.message);
-                    
-                    // Method 3: Try using socket
-                    try {
-                        if (zk.blockUser) {
-                            await zk.blockUser(sender, 'block');
-                            console.log("✅ User BLOCKED successfully (method 3)!");
-                            blocked = true;
-                        }
-                    } catch (blockError3) {
-                        console.log("❌ All block methods failed");
-                    }
-                }
-            }
+            // ============ BLOCK USER (IMPROVED) ============
+            blocked = await blockUser(zk, sender);
             
             // ============ SEND NOTIFICATION ============
-            const isGroup = message.key.remoteJid.endsWith('@g.us');
-            
-            let notification = `╭━━━ *『 ANTIBUG SYSTEM 』* ━━━╮
+            if (isGroup) {
+                let notification = `╭━━━ *『 ANTIBUG 』* ━━━╮
 ┃ 
 ┃ 🚨 *BUG DETECTED!*
 ┃ 
 ┃ 📛 *Type:* ${detection.type}
-┃ 📝 *Reason:* ${detection.description}
 ┃ 👤 *User:* @${sender.split('@')[0]}
 ┃ 
-┃ ✅ *Message Deleted:* ${deleted ? 'YES' : 'NO'}
-┃ 🔨 *User Blocked:* ${blocked ? 'YES' : 'NO'}
-┃ 
-┃ ${blocked ? '🚫 User has been blocked from contacting the bot!' : '❌ Failed to block user!'}
+┃ ✅ *Deleted:* ${deleted ? 'YES' : 'NO'}
+┃ 🔨 *Blocked:* ${blocked ? 'YES' : 'NO'}
 ┃ 
 ╰━━━━━━━━━━━━━━━━━━━━`;
 
-            // Send notification to the chat
-            try {
-                await zk.sendMessage(message.key.remoteJid, {
-                    text: notification,
-                    mentions: [sender]
-                }, { quoted: message });
-            } catch (notifyError) {
-                console.log("❌ Failed to send notification:", notifyError.message);
+                try {
+                    await zk.sendMessage(message.key.remoteJid, {
+                        text: notification,
+                        mentions: [sender]
+                    });
+                } catch (e) {}
             }
             
             // ============ NOTIFY OWNER ============
@@ -182,27 +204,22 @@ async function processIncomingMessage(zk, message, sender) {
                 if (ownerJid && ownerJid !== sender) {
                     let ownerNotify = `╭━━━ *『 ANTIBUG ALERT 』* ━━━╮
 ┃ 
-┃ 🚨 *BUG DETECTED & HANDLED*
+┃ 🚨 *BUG HANDLED*
 ┃ 
 ┃ 📛 *Type:* ${detection.type}
-┃ 📝 *Reason:* ${detection.description}
 ┃ 👤 *User:* ${sender}
 ┃ 💬 *Chat:* ${message.key.remoteJid}
 ┃ 
-┃ ✅ *Deleted:* ${deleted ? 'YES' : 'NO'}
-┃ 🔨 *Blocked:* ${blocked ? 'YES' : 'NO'}
+┃ ✅ *Blocked:* ${blocked ? 'YES' : 'NO'}
 ┃ 
 ╰━━━━━━━━━━━━━━━━━━━━`;
 
                     await zk.sendMessage(ownerJid, { text: ownerNotify });
                 }
-            } catch (ownerError) {
-                console.log("❌ Failed to notify owner:", ownerError.message);
-            }
+            } catch (e) {}
             
             return { 
                 blocked: true, 
-                reason: detection,
                 userBlocked: blocked,
                 messageDeleted: deleted
             };
