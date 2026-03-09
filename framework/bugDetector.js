@@ -50,72 +50,26 @@ function detectBug(message) {
     return { isBug: false };
 }
 
-// BLOCK USER FUNCTION - IMPROVED VERSION
+// BLOCK USER FUNCTION
 async function blockUser(zk, sender) {
-    const methods = [];
-    
-    // METHOD 1: Standard updateBlockStatus
     try {
         await zk.updateBlockStatus(sender, 'block');
-        console.log("✅ Method 1: updateBlockStatus SUCCESS");
+        console.log("✅ User BLOCKED successfully!");
         return true;
     } catch (e) {
-        methods.push(`Method 1 failed: ${e.message}`);
-    }
-    
-    // METHOD 2: With different parameter format
-    try {
-        await zk.updateBlockStatus(sender, "block");
-        console.log("✅ Method 2: updateBlockStatus with string SUCCESS");
-        return true;
-    } catch (e) {
-        methods.push(`Method 2 failed: ${e.message}`);
-    }
-    
-    // METHOD 3: Using blockUser if available
-    try {
-        if (zk.blockUser) {
-            await zk.blockUser(sender, 'block');
-            console.log("✅ Method 3: blockUser SUCCESS");
+        console.log("❌ Block failed:", e.message);
+        
+        // Try alternative method
+        try {
+            const numberOnly = sender.split('@')[0];
+            await zk.updateBlockStatus(numberOnly + '@s.whatsapp.net', 'block');
+            console.log("✅ User BLOCKED (method 2)!");
             return true;
+        } catch (e2) {
+            console.log("❌ All block methods failed");
+            return false;
         }
-    } catch (e) {
-        methods.push(`Method 3 failed: ${e.message}`);
     }
-    
-    // METHOD 4: Using number only
-    try {
-        const numberOnly = sender.split('@')[0];
-        await zk.updateBlockStatus(numberOnly + '@s.whatsapp.net', 'block');
-        console.log("✅ Method 4: number only SUCCESS");
-        return true;
-    } catch (e) {
-        methods.push(`Method 4 failed: ${e.message}`);
-    }
-    
-    // METHOD 5: Try to block via socket
-    try {
-        if (zk.ws) {
-            // Another approach - send block command via socket
-            await zk.sendNode({
-                tag: 'action',
-                attrs: { type: 'set', epoch: '1' },
-                content: [
-                    { tag: 'block', attrs: { jid: sender, action: 'block' } }
-                ]
-            });
-            console.log("✅ Method 5: socket block SUCCESS");
-            return true;
-        }
-    } catch (e) {
-        methods.push(`Method 5 failed: ${e.message}`);
-    }
-    
-    // Log all failures
-    console.log("❌ All block methods failed:");
-    methods.forEach(m => console.log(`   • ${m}`));
-    
-    return false;
 }
 
 // Main function
@@ -138,11 +92,31 @@ async function processIncomingMessage(zk, message, sender) {
             
             const isGroup = message.key.remoteJid.endsWith('@g.us');
             let deleted = false;
-            let blocked = false;
             
-            // ============ HANDLE MESSAGE ============
-            if (isGroup) {
-                // Try to delete from group
+            // ============ PRIVATE CHAT ============
+            if (!isGroup) {
+                try {
+                    // 1. Mark as read
+                    await zk.readMessages([message.key]);
+                    
+                    // 2. Try to delete (hides from your view)
+                    await zk.sendMessage(message.key.remoteJid, {
+                        delete: message.key
+                    }).catch(e => {});
+                    
+                    // 3. Send invisible character to push message up
+                    await zk.sendMessage(message.key.remoteJid, {
+                        text: "‎"
+                    }).catch(e => {});
+                    
+                    console.log("✅ Message hidden from your view in private chat");
+                    deleted = true;
+                } catch (dmError) {
+                    console.log("❌ Private chat hide failed:", dmError.message);
+                }
+            } 
+            // ============ GROUP CHAT ============
+            else {
                 try {
                     await zk.sendMessage(message.key.remoteJid, {
                         delete: {
@@ -157,24 +131,12 @@ async function processIncomingMessage(zk, message, sender) {
                 } catch (deleteError) {
                     console.log("❌ Delete failed:", deleteError.message);
                 }
-            } else {
-                // Private chat - hide message
-                try {
-                    await zk.readMessages([message.key]);
-                    await zk.sendMessage(message.key.remoteJid, {
-                        delete: message.key
-                    }).catch(e => {});
-                    console.log("✅ Message hidden from your view");
-                    deleted = true;
-                } catch (dmError) {
-                    console.log("❌ Hide failed:", dmError.message);
-                }
             }
             
-            // ============ BLOCK USER (IMPROVED) ============
-            blocked = await blockUser(zk, sender);
+            // ============ BLOCK USER ============
+            const blocked = await blockUser(zk, sender);
             
-            // ============ SEND NOTIFICATION ============
+            // ============ NOTIFY (GROUP ONLY) ============
             if (isGroup) {
                 let notification = `╭━━━ *『 ANTIBUG 』* ━━━╮
 ┃ 
@@ -210,7 +172,8 @@ async function processIncomingMessage(zk, message, sender) {
 ┃ 👤 *User:* ${sender}
 ┃ 💬 *Chat:* ${message.key.remoteJid}
 ┃ 
-┃ ✅ *Blocked:* ${blocked ? 'YES' : 'NO'}
+┃ ✅ *Hidden:* ${!isGroup ? 'YES' : 'N/A'}
+┃ 🔨 *Blocked:* ${blocked ? 'YES' : 'NO'}
 ┃ 
 ╰━━━━━━━━━━━━━━━━━━━━`;
 
