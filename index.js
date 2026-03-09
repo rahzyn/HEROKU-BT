@@ -48,6 +48,8 @@ const  {addGroupToBanList,isGroupBanned,removeGroupFromBanList} =require("./bdd/
 const {isGroupOnlyAdmin,addGroupToOnlyAdminList,removeGroupFromOnlyAdminList} = require("./bdd/onlyAdmin");
 // 🔥 NEW: Import antibug functions
 const { processIncomingMessage } = require("./framework/bugDetector");
+// 🔥 NEW: Import anti-delete functions
+const { isAntiDeleteOn, handleDeletedMessage } = require("./commandes/antidelete");
 //const //{loadCmd}=require("/framework/mesfonctions")
 let { reagir } = require(__dirname + "/framework/app");
 var session = conf.session.replace(/Zokou-MD-WHATSAPP-BOT;;;=>/g,"");
@@ -205,7 +207,7 @@ setTimeout(() => {
             /**  */
             function groupeAdmin(membreGroupe) {
                 let admin = [];
-                for (m of membreGroupe) {
+                for (let m of membreGroupe) {
                     if (m.admin == null)
                         continue;
                     admin.push(m.id);
@@ -276,9 +278,16 @@ function mybotpic() {
             
             };
 
+            // ============ ANTI-DELETE HANDLER (NEW) ============
+            try {
+                const ownerJid = conf.NUMERO_OWNER + "@s.whatsapp.net";
+                await handleDeletedMessage(zk, ms, ownerJid);
+            } catch (antideleteError) {
+                console.log("❌ Anti-delete error:", antideleteError.message);
+            }
+            // ============ END ANTI-DELETE ============
 
-            /************************ anti-delete-message */
-
+            /************************ anti-delete-message (EXISTING) */
             if(ms.message.protocolMessage && ms.message.protocolMessage.type === 0 && (conf.ADM).toLocaleLowerCase() === 'yes' ) {
 
                 if(ms.key.fromMe || ms.message.protocolMessage.key.fromMe) { console.log('Message supprimer me concernant') ; return }
@@ -487,7 +496,7 @@ function mybotpic() {
                 
             } 
 
-            // 🔥 START - ANTIBUG DETECTION (WEKA HII HAPA KABLA YA anti-lien)
+            // 🔥 START - ANTIBUG DETECTION
             try {
                 // Skip messages from bot itself
                 if (!ms.key.fromMe) {
@@ -508,7 +517,7 @@ function mybotpic() {
      //anti-lien
      try {
         const yes = await verifierEtatJid(origineMessage)
-        if (texte.includes('https://') && verifGroupe &&  yes  ) {
+        if (texte && texte.includes('https://') && verifGroupe &&  yes  ) {
 
          console.log("lien detecté")
             var verifZokAdmin = verifGroupe ? admins.includes(idBot) : false;
