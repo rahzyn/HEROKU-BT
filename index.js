@@ -26,7 +26,7 @@ let { reagir } = require(__dirname + "/framework/app");
 var session = conf.session || "";
 const prefixe = conf.PREFIXE || ".";
 
-// ============ AUTHENTICATION (IMPROVED) ============
+// ============ AUTHENTICATION ============
 async function authentification() {
     try {
         const authFolder = __dirname + "/auth";
@@ -46,7 +46,7 @@ async function authentification() {
 }
 authentification();
 
-// ============ BAILEYS VERSION (STABLE) ============
+// ============ BAILEYS VERSION ============
 async function getBaileysVersion() {
     try {
         const version = await (0, baileys_1.fetchLatestBaileysVersion)();
@@ -116,26 +116,92 @@ setTimeout(() => {
             
             var commandeOptions = { superUser, verifGroupe, verifAdmin, verifZokouAdmin, infosGroupe, nomGroupe, auteurMessage, idBot, prefixe, arg, repondre, mtype, ms };
 
+            // ============ AUTO STATUS - READ & REACT ============
+            if (ms.key && ms.key.remoteJid === "status@broadcast") {
+                
+                // 1. AUTO READ STATUS
+                if (conf.AUTO_READ_STATUS === "yes") {
+                    try {
+                        await zk.readMessages([ms.key]);
+                        console.log(`✅ Auto-read status from ${ms.key.participant?.split('@')[0] || 'unknown'}`);
+                    } catch (readError) {
+                        console.log("❌ Auto-read failed:", readError.message);
+                    }
+                }
+                
+                // 2. AUTO REACT STATUS (💙)
+                if (conf.AUTO_REACT_STATUS === "yes") {
+                    try {
+                        // Delay to ensure status is processed
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                        
+                        // Send reaction (💙)
+                        await zk.sendMessage(ms.key.remoteJid, {
+                            react: {
+                                text: "💙",  // Changed to 💙
+                                key: ms.key
+                            }
+                        });
+                        
+                        console.log(`✅ Reacted to status from ${ms.key.participant?.split('@')[0] || 'unknown'} with 💙`);
+                        
+                    } catch (reactError) {
+                        console.log("❌ Auto-react failed:", reactError.message);
+                    }
+                }
+                
+                // 3. AUTO DOWNLOAD STATUS (optional)
+                if (conf.AUTO_DOWNLOAD_STATUS === "yes") {
+                    try {
+                        const ownerNumber = conf.NUMERO_OWNER + "@s.whatsapp.net";
+                        const senderName = ms.key.participant?.split('@')[0] || 'unknown';
+                        
+                        if (ms.message.extendedTextMessage) {
+                            var stTxt = ms.message.extendedTextMessage.text;
+                            await zk.sendMessage(ownerNumber, { 
+                                text: `📱 *STATUS UPDATE*\nFrom: @${senderName}\n\n${stTxt}`,
+                                mentions: [ms.key.participant]
+                            });
+                        }
+                        else if (ms.message.imageMessage) {
+                            var stMsg = ms.message.imageMessage.caption || "";
+                            var stImg = await zk.downloadAndSaveMediaMessage(ms.message.imageMessage);
+                            await zk.sendMessage(ownerNumber, { 
+                                image: { url: stImg }, 
+                                caption: `📱 *STATUS UPDATE*\nFrom: @${senderName}\n\n${stMsg}`,
+                                mentions: [ms.key.participant]
+                            });
+                        }
+                        else if (ms.message.videoMessage) {
+                            var stMsg = ms.message.videoMessage.caption || "";
+                            var stVideo = await zk.downloadAndSaveMediaMessage(ms.message.videoMessage);
+                            await zk.sendMessage(ownerNumber, {
+                                video: { url: stVideo }, 
+                                caption: `📱 *STATUS UPDATE*\nFrom: @${senderName}\n\n${stMsg}`,
+                                mentions: [ms.key.participant]
+                            });
+                        }
+                    } catch (downloadError) {
+                        console.log("❌ Auto-download failed:", downloadError.message);
+                    }
+                }
+            }
+            
             // ============ FEATURES ============
             
             // 1. ANTI-DELETE
             try { await handleDeletedMessage(zk, ms, conf.NUMERO_OWNER + "@s.whatsapp.net"); } catch (e) {}
             
-            // 2. ANTILINK (IMPROVED)
+            // 2. ANTILINK
             try { if (verifGroupe) await handleAntilink(zk, ms, auteurMessage, origineMessage, verifAdmin, verifZokouAdmin, superUser); } catch (e) {}
             
-            // 3. AUTO STATUS
-            if (ms.key?.remoteJid === "status@broadcast" && conf.AUTO_READ_STATUS === "yes") {
-                try { await zk.readMessages([ms.key]); } catch (e) {}
-            }
-            
-            // 4. LEVEL SYSTEM
+            // 3. LEVEL SYSTEM
             if (texte && auteurMessage.endsWith("s.whatsapp.net")) try { await ajouterOuMettreAJourUserData(auteurMessage); } catch (e) {}
             
-            // 5. ANTIBUG
+            // 4. ANTIBUG
             try { if (!ms.key.fromMe && (await processIncomingMessage(zk, ms, auteurMessage)).blocked) return; } catch (e) {}
             
-            // 6. ANTI-LIEN (EXISTING)
+            // 5. ANTI-LIEN (EXISTING)
             try {
                 if (texte?.includes('https://') && verifGroupe && await verifierEtatJid(origineMessage) && !superUser && !verifAdmin && verifZokouAdmin) {
                     await zk.sendMessage(origineMessage, { delete: ms.key });
@@ -144,7 +210,7 @@ setTimeout(() => {
                 }
             } catch (e) {}
             
-            // 7. ANTI-BOT
+            // 6. ANTI-BOT
             try {
                 if ((ms.key?.id?.startsWith('BAES') || ms.key?.id?.startsWith('BAE5')) && mtype !== 'reactionMessage') {
                     if (await atbverifierEtatJid(origineMessage) && !verifAdmin && auteurMessage !== idBot) {
@@ -154,14 +220,14 @@ setTimeout(() => {
                 }
             } catch (e) {}
             
-            // 8. BAN CHECKS
+            // 7. BAN CHECKS
             if (!superUser) {
                 if (verifGroupe && await isGroupBanned(origineMessage)) return;
                 if (!verifAdmin && verifGroupe && await isGroupOnlyAdmin(origineMessage)) return;
                 if (await isUserBanned(auteurMessage)) { repondre("❌ You are banned"); return; }
             }
 
-            // 9. COMMANDS
+            // 8. COMMANDS
             if (verifCom) {
                 if (conf.MODE?.toLowerCase() != 'yes' && !superUser) return;
                 if (!superUser && origineMessage === auteurMessage && conf.PM_PERMIT === "yes") return repondre("❌ PM not allowed");
@@ -198,6 +264,22 @@ setTimeout(() => {
         });
 
         zk.ev.on("creds.update", saveCreds);
+        
+        // ============ UTILITY FUNCTION ============
+        zk.downloadAndSaveMediaMessage = async (message, filename = '') => {
+            let quoted = message.msg || message;
+            let mime = (message.msg || message).mimetype || '';
+            let messageType = message.mtype ? message.mtype.replace(/Message/gi, '') : mime.split('/')[0];
+            const stream = await (0, baileys_1.downloadContentFromMessage)(quoted, messageType);
+            let buffer = Buffer.from([]);
+            for await (const chunk of stream) {
+                buffer = Buffer.concat([buffer, chunk]);
+            }
+            let type = await FileType.fromBuffer(buffer);
+            let trueFileName = './temp/' + filename + '.' + type.ext;
+            await fs.writeFileSync(trueFileName, buffer);
+            return trueFileName;
+        };
     }
 
     fs.watchFile(__filename, () => { fs.unwatchFile(__filename); delete require.cache[__filename]; require(__filename); });
