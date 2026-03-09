@@ -14,8 +14,8 @@ if (!fs.existsSync(path.join(__dirname, "../bdd"))) {
 if (!fs.existsSync(antilinkPath)) {
     fs.writeFileSync(antilinkPath, JSON.stringify({ 
         status: "off", 
-        action: "delete",
-        warnCount: 3 // Number of warnings before remove
+        action: "warn",  // Default to warn
+        warnCount: 3      // Default warn count
     }, null, 2));
 }
 
@@ -40,9 +40,9 @@ function getAntilinkAction() {
     try {
         const data = fs.readFileSync(antilinkPath);
         const config = JSON.parse(data);
-        return config.action || "delete";
+        return config.action || "warn";
     } catch {
-        return "delete";
+        return "warn";
     }
 }
 
@@ -118,7 +118,24 @@ zokou({
     }
 
     if (!arg[0]) {
-        return repondre("*❗ Usage:*\n.antilink on - Enable\n.antilink off - Disable\n.antilink action delete|warn|remove - Set action\n.antilink warncount [number] - Set warn count before remove\n.antilink resetwarn @user - Reset warns for user\n\n_Powered by Rahmany_");
+        return repondre("*❗ Usage:*\n" +
+            ".antilink on - Enable\n" +
+            ".antilink off - Disable\n" +
+            ".antilink action warn|remove|delete - Set action\n" +
+            ".antilink warncount [number] - Set warn count\n" +
+            ".antilink resetwarn @user - Reset warns\n" +
+            ".antilink status - Check status\n\n" +
+            "_Powered by Rahmany_");
+    }
+
+    // Handle status check
+    if (arg[0].toLowerCase() === "status") {
+        const config = JSON.parse(fs.readFileSync(antilinkPath));
+        return repondre(`📊 *ANTILINK STATUS*\n\n` +
+            `Status: ${config.status === 'on' ? '✅ ON' : '❌ OFF'}\n` +
+            `Action: ${config.action.toUpperCase()}\n` +
+            `Warn Count: ${config.warnCount}\n\n` +
+            `_Powered by Rahmany_`);
     }
 
     // Handle warn count setting
@@ -132,7 +149,9 @@ zokou({
             const config = JSON.parse(fs.readFileSync(antilinkPath));
             config.warnCount = count;
             fs.writeFileSync(antilinkPath, JSON.stringify(config, null, 2));
-            return repondre(`✅ *Warn count set to:* ${count}\n\nUser will be removed after sending ${count} links.\n\n_Powered by Rahmany_`);
+            return repondre(`✅ *Warn count set to:* ${count}\n\n` +
+                `User will be removed after sending ${count} links.\n\n` +
+                `_Powered by Rahmany_`);
         } catch (e) {
             return repondre("❌ Failed to update warn count.");
         }
@@ -174,7 +193,7 @@ zokou({
 
     // Handle on/off
     if (!["on", "off"].includes(arg[0].toLowerCase())) {
-        return repondre("*❗ Usage:*\n.antilink on\n.antilink off\n.antilink action delete|warn|remove\n.antilink warncount [number]\n.antilink resetwarn @user\n\n_Powered by Rahmany_");
+        return repondre("*❗ Usage:* .antilink on|off|action|warncount|resetwarn|status");
     }
 
     const status = arg[0].toLowerCase();
@@ -186,8 +205,11 @@ zokou({
         
         await repondre(
             status === "on"
-                ? `✅ *ANTILINK ENABLED*\n\nAll links will be auto-deleted.\nAction: ${config.action.toUpperCase()}\nWarn Count: ${config.warnCount}\n\n_Powered by Rahmany_`
-                : `⚠️ *ANTILINK DISABLED*\n\nLinks will not be deleted.\n\n_Powered by Rahmany_`
+                ? `✅ *ANTILINK ENABLED*\n\n` +
+                  `Action: ${config.action.toUpperCase()}\n` +
+                  `Warn Count: ${config.warnCount}\n\n` +
+                  `_Powered by Rahmany_`
+                : `⚠️ *ANTILINK DISABLED*\n\n_Powered by Rahmany_`
         );
     } catch (e) {
         await repondre("❌ Failed to update antilink configuration.");
@@ -208,6 +230,11 @@ module.exports = {
             // Check if antilink is on
             if (!isAntilinkOn()) return false;
             
+            // Skip if sender is admin, superUser, or bot itself
+            if (isAdmin || superUser || message.key.fromMe) {
+                return false;
+            }
+            
             // Get message text
             const messageText = message.message?.conversation || 
                                 message.message?.extendedTextMessage?.text ||
@@ -217,53 +244,38 @@ module.exports = {
             if (!messageText) return false;
             
             // Check for links (comprehensive regex)
-            const linkRegex = /(https?:\/\/[^\s]+)|(www\.[^\s]+)|([a-zA-Z0-9]+\.(com|org|net|io|gov|edu|tz|co\.tz|go\.tz|africa|ke|ug|mw|zm|cd|rw|bi|ss|et|er|dj|so|km|sc|mu|km))(\/[^\s]*)?/gi;
+            const linkRegex = /(https?:\/\/[^\s]+)|(www\.[^\s]+)|([a-zA-Z0-9]+\.(com|org|net|io|gov|edu|tz|co\.tz|go\.tz|africa|ke|ug))(\/[^\s]*)?/gi;
             
             if (!linkRegex.test(messageText)) return false;
             
             console.log("🔗 LINK DETECTED!");
             console.log(`Sender: ${sender}`);
-            console.log(`Is Admin: ${isAdmin}`);
-            console.log(`SuperUser: ${superUser}`);
-            
-            // Skip if sender is admin, superUser, or bot itself
-            if (isAdmin || superUser || sender.includes('@g.us') || message.key.fromMe) {
-                console.log("✅ Link allowed (admin/superUser)");
-                return false;
-            }
-            
-            const action = getAntilinkAction();
-            const warnLimit = getWarnCountSetting();
-            console.log(`Action: ${action}`);
-            console.log(`Warn Limit: ${warnLimit}`);
             
             // Try to delete message (always delete)
-            let deleted = false;
             try {
-                const deleteKey = {
-                    remoteJid: chatJid,
-                    fromMe: false,
-                    id: message.key.id,
-                    participant: message.key.participant
-                };
-                
-                await zk.sendMessage(chatJid, { delete: deleteKey });
+                await zk.sendMessage(chatJid, { 
+                    delete: { 
+                        remoteJid: chatJid, 
+                        fromMe: false, 
+                        id: message.key.id,
+                        participant: message.key.participant
+                    } 
+                });
                 console.log("✅ Link message deleted");
-                deleted = true;
             } catch (deleteError) {
                 console.log("❌ Failed to delete:", deleteError.message);
             }
             
-            // Get current warn count
-            let currentWarns = getUserWarns(sender, chatJid);
-            console.log(`Current warns: ${currentWarns}`);
+            const action = getAntilinkAction();
+            const warnLimit = getWarnCountSetting();
             
-            // If action is "remove" OR we're using warn system
-            if (action === "remove" || action === "warn") {
-                
-                // Add warn
+            // If action is "warn", use warn system
+            if (action === "warn") {
+                // Get current warn count
+                let currentWarns = getUserWarns(sender, chatJid);
                 currentWarns = addUserWarn(sender, chatJid);
-                console.log(`New warn count: ${currentWarns}`);
+                
+                console.log(`Current warns: ${currentWarns}/${warnLimit}`);
                 
                 // Check if reached warn limit
                 if (currentWarns >= warnLimit) {
@@ -288,7 +300,7 @@ module.exports = {
                     } else {
                         // Bot not admin, just warn
                         await zk.sendMessage(chatJid, {
-                            text: `⚠️ @${sender.split('@')[0]} You have sent ${currentWarns}/${warnLimit} links. Bot needs to be admin to remove you.`,
+                            text: `⚠️ @${sender.split('@')[0]} You have sent ${currentWarns}/${warnLimit} links.\nBot needs to be admin to remove you.`,
                             mentions: [sender]
                         });
                     }
@@ -296,17 +308,35 @@ module.exports = {
                     // Send warning with count
                     const remaining = warnLimit - currentWarns;
                     await zk.sendMessage(chatJid, {
-                        text: `⚠️ @${sender.split('@')[0]} Links are not allowed!\n\n*Warning:* ${currentWarns}/${warnLimit}\n*Remaining:* ${remaining} ${remaining === 1 ? 'warning' : 'warnings'} before removal.`,
+                        text: `⚠️ @${sender.split('@')[0]} Links are not allowed!\n\n` +
+                              `*Warning:* ${currentWarns}/${warnLimit}\n` +
+                              `*Remaining:* ${remaining} ${remaining === 1 ? 'warning' : 'warnings'} before removal.`,
                         mentions: [sender]
                     });
                 }
             } 
-            else {
-                // Just delete - no warning or tracking
-                if (deleted) {
-                    console.log("✅ Link deleted silently (no warn tracking)");
+            else if (action === "remove") {
+                // Remove immediately
+                if (isBotAdmin) {
+                    try {
+                        await zk.groupParticipantsUpdate(chatJid, [sender], "remove");
+                        console.log("✅ User removed from group immediately");
+                        
+                        await zk.sendMessage(chatJid, {
+                            text: `🔨 @${sender.split('@')[0]} removed for sending links.`,
+                            mentions: [sender]
+                        });
+                    } catch (removeError) {
+                        console.log("❌ Failed to remove:", removeError.message);
+                    }
+                } else {
+                    await zk.sendMessage(chatJid, {
+                        text: `⚠️ @${sender.split('@')[0]} Links are not allowed!\nBot needs to be admin to remove you.`,
+                        mentions: [sender]
+                    });
                 }
             }
+            // else action === "delete" - already deleted, no further action
             
             return true;
             
