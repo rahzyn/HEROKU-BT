@@ -7,47 +7,53 @@ const databasePath = path.join(__dirname, './database.db');
 const DATABASE_URL = process.env.DATABASE_URL === undefined
     ? databasePath
     : process.env.DATABASE_URL;
-module.exports = { session: process.env.SESSION_ID || 'zokk',
+
+module.exports = { 
+    // ============ SESSION ============
+    session: process.env.SESSION_ID || 'zokk',
+    
+    // ============ BOT SETTINGS ============
     PREFIXE: process.env.PREFIX || "+",
-    OWNER_NAME: process.env.OWNER_NAME || " chugastan",
-    NUMERO_OWNER : process.env.NUMERO_OWNER || "255693629079",              
-    AUTO_READ_STATUS: process.env.AUTO_READ_STATUS || "yes",            // 👈 Ibadilishe kuwa "yes"
-    AUTO_REACT_STATUS : process.env.AUTO_REACT_STATUS || 'yes',         // 👈 Hii tayari "yes" (sawa)
-    AUTO_DOWNLOAD_STATUS: process.env.AUTO_DOWNLOAD_STATUS || 'no',     // 👈 Weka "no" kama hutaki spam
-    BOT : process.env.BOT_NAME || 'HEROKU-BT',
-    URL : process.env.BOT_MENU_LINKS || 'https://files.catbox.moe/zotx9t.jpg',
+    OWNER_NAME: process.env.OWNER_NAME || "chugastan",
+    NUMERO_OWNER: process.env.NUMERO_OWNER || "255693629079",
+    BOT: process.env.BOT_NAME || 'HEROKU-BT',
     MODE: process.env.PUBLIC_MODE || "no",
     PM_PERMIT: process.env.PM_PERMIT || 'no',
-    HEROKU_APP_NAME : process.env.HEROKU_APP_NAME,
-    HEROKU_APY_KEY : process.env.HEROKU_APY_KEY ,
-    WARN_COUNT : process.env.WARN_COUNT || '3' ,
-    ETAT : process.env.PRESENCE || '1',                                 // 👈 1 = online, 2 = typing, 3 = recording
-    CHATBOT : process.env.PM_CHATBOT || 'no',
-    DP : process.env.STARTING_BOT_MESSAGE || "yes",
-    ADM : process.env.ANTI_DELETE_MESSAGE || 'yes',
+    ETAT: process.env.PRESENCE || '1',          // 1=online, 2=typing, 3=recording
+    DP: process.env.STARTING_BOT_MESSAGE || "yes",
+    
+    // ============ AUTO STATUS SETTINGS ============
+    AUTO_READ_STATUS: process.env.AUTO_READ_STATUS || "yes",        // Soma status
+    AUTO_REACT_STATUS: process.env.AUTO_REACT_STATUS || 'yes',       // React kwa status (💙)
+    AUTO_DOWNLOAD_STATUS: process.env.AUTO_DOWNLOAD_STATUS || 'no',  // Download status kwa DM
+    
+    // ============ ANTI-DELETE SETTINGS ============
+    ADM: process.env.ANTI_DELETE_MESSAGE || 'yes',
+    
+    // ============ WARN SYSTEM ============
+    WARN_COUNT: process.env.WARN_COUNT || '3',
+    
+    // ============ BOT PROFILE ============
+    URL: process.env.BOT_MENU_LINKS || 'https://files.catbox.moe/zotx9t.jpg',
+    
+    // ============ CHATBOT ============
+    CHATBOT: process.env.PM_CHATBOT || 'no',
+    
+    // ============ HEROKU SETTINGS ============
+    HEROKU_APP_NAME: process.env.HEROKU_APP_NAME,
+    HEROKU_APY_KEY: process.env.HEROKU_APY_KEY,
+    
+    // ============ DATABASE ============
     DATABASE_URL,
     DATABASE: DATABASE_URL === databasePath
-        ? "postgres://db_7xp9_user:6hwmTN7rGPNsjlBEHyX49CXwrG7cDeYi@dpg-cj7ldu5jeehc73b2p7g0-a.oregon-postgres.render.com/db_7xp9" : "postgres://db_7xp9_user:6hwmTN7rGPNsjlBEHyX49CXwrG7cDeYi@dpg-cj7ldu5jeehc73b2p7g0-a.oregon-postgres.render.com/db_7xp9",
-    /* new Sequelize({
-     dialect: 'sqlite',
-     storage: DATABASE_URL,
-     logging: false,
-})
-: new Sequelize(DATABASE_URL, {
-     dialect: 'postgres',
-     ssl: true,
-     protocol: 'postgres',
-     dialectOptions: {
-         native: true,
-         ssl: { require: true, rejectUnauthorized: false },
-     },
-     logging: false,
-}),*/
+        ? "postgres://db_7xp9_user:6hwmTN7rGPNsjlBEHyX49CXwrG7cDeYi@dpg-cj7ldu5jeehc73b2p7g0-a.oregon-postgres.render.com/db_7xp9" 
+        : "postgres://db_7xp9_user:6hwmTN7rGPNsjlBEHyX49CXwrG7cDeYi@dpg-cj7ldu5jeehc73b2p7g0-a.oregon-postgres.render.com/db_7xp9",
 };
+
 let fichier = require.resolve(__filename);
 fs.watchFile(fichier, () => {
     fs.unwatchFile(fichier);
-    console.log(`mise à jour ${__filename}`);
+    console.log(`🔄 Updating ${__filename}`);
     delete require.cache[fichier];
     require(fichier);
 });
