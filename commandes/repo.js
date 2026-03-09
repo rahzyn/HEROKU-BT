@@ -8,36 +8,36 @@ zokou({
 }, async (dest, zk, commandeOptions) => {
   const { repondre } = commandeOptions;
   
-  const repoMessage = `╔════════════════════════════╗
+  const repoMessage = `╔════════════════════════════════════╗
 ║       📁 HEROKU-BT REPO 📁       ║
-╠════════════════════════════╣
+╠═══════════════════════════════════╣
 ║                                   
 ║  📌 *REPOSITORY INFORMATION*      
 ║  • 📁 Name: HEROKU-BT             
 ║  • 👑 Owner: @Rahmany             
 ║  • ⭐ Stars: ★★★★★ (5)            
-║  • 🔄 Forks: ⑂ 100+               
+║  • 🔄 Forks: ⑂ 18+               
 ║                                   
 ║  🔗 *DIRECT LINK:*                 
-║  https://github.com/rahzyn/       
-║  HEROKU-BT                        
+║  https://github.com/rahzyn/HEROKU-BT       
+║                          
 ║                                   
 ║  📦 *PAIR CODE:*                   
 ║  https://heroku-pair.onrender.com/
 ║                                   
 ║  📢 *CHANNEL:*                     
-║  https://whatsapp.com/channel/    
-║  0029VatokI45EjxufALmY32X         
+║  https://whatsapp.com/channel/0029VatokI45EjxufALmY32X  
+║           
 ║                                   
 ║  💬 *OWNER:*                       
 ║  https://wa.me/255693629079        
 ║                                   
 ║  ✨ *QR CODE:*                     
 ║  https://quickchart.io/qr?text=    
-║  https://github.com/rahzyn/        
-║  HEROKU-BT&size=200               
-║                                   
-╚════════════════════════════╝
+║  https://github.com/rahzyn/HEROKU-BT&size=200        
+║                 
+║                                
+╚════════════════════════════════════╝
      Powered with ❤️ by Rahmany`;
 
   await repondre(repoMessage);
