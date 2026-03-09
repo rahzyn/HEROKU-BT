@@ -14,8 +14,8 @@ if (!fs.existsSync(path.join(__dirname, "../bdd"))) {
 if (!fs.existsSync(antilinkPath)) {
     fs.writeFileSync(antilinkPath, JSON.stringify({ 
         status: "off", 
-        action: "warn",  // Default to warn
-        warnCount: 3      // Default warn count
+        action: "warn",
+        warnCount: 3
     }, null, 2));
 }
 
@@ -107,12 +107,10 @@ zokou({
 }, async (dest, zk, commandeOptions) => {
     const { repondre, arg, verifGroupe, verifAdmin, superUser } = commandeOptions;
 
-    // Check if in group
     if (!verifGroupe) {
         return repondre("❌ *This command can only be used in groups!*");
     }
 
-    // Check if user is admin or superUser
     if (!verifAdmin && !superUser) {
         return repondre("❌ *Only group admins can use this command!*");
     }
@@ -128,17 +126,16 @@ zokou({
             "_Powered by Rahmany_");
     }
 
-    // Handle status check
     if (arg[0].toLowerCase() === "status") {
         const config = JSON.parse(fs.readFileSync(antilinkPath));
         return repondre(`📊 *ANTILINK STATUS*\n\n` +
             `Status: ${config.status === 'on' ? '✅ ON' : '❌ OFF'}\n` +
             `Action: ${config.action.toUpperCase()}\n` +
             `Warn Count: ${config.warnCount}\n\n` +
+            `Bot Admin: ${verifAdmin ? '✅' : '❌'}\n\n` +
             `_Powered by Rahmany_`);
     }
 
-    // Handle warn count setting
     if (arg[0].toLowerCase() === "warncount" && arg[1]) {
         const count = parseInt(arg[1]);
         if (isNaN(count) || count < 1 || count > 10) {
@@ -149,15 +146,12 @@ zokou({
             const config = JSON.parse(fs.readFileSync(antilinkPath));
             config.warnCount = count;
             fs.writeFileSync(antilinkPath, JSON.stringify(config, null, 2));
-            return repondre(`✅ *Warn count set to:* ${count}\n\n` +
-                `User will be removed after sending ${count} links.\n\n` +
-                `_Powered by Rahmany_`);
+            return repondre(`✅ *Warn count set to:* ${count}\n\n_Powered by Rahmany_`);
         } catch (e) {
             return repondre("❌ Failed to update warn count.");
         }
     }
 
-    // Handle reset warns for user
     if (arg[0].toLowerCase() === "resetwarn") {
         if (!arg[1]) {
             return repondre("❌ *Please mention the user to reset warns*\nExample: .antilink resetwarn @user");
@@ -174,7 +168,6 @@ zokou({
         return repondre(`✅ *Warns reset for @${targetUser.split('@')[0]}*\n\n_Powered by Rahmany_`);
     }
 
-    // Handle action setting
     if (arg[0].toLowerCase() === "action" && arg[1]) {
         const action = arg[1].toLowerCase();
         if (!["delete", "warn", "remove"].includes(action)) {
@@ -191,7 +184,6 @@ zokou({
         }
     }
 
-    // Handle on/off
     if (!["on", "off"].includes(arg[0].toLowerCase())) {
         return repondre("*❗ Usage:* .antilink on|off|action|warncount|resetwarn|status");
     }
@@ -224,18 +216,14 @@ module.exports = {
     getUserWarns,
     resetUserWarns,
     
-    // Function to handle link detection with warn system
     async handleAntilink(zk, message, sender, chatJid, isAdmin, isBotAdmin, superUser) {
         try {
-            // Check if antilink is on
             if (!isAntilinkOn()) return false;
             
-            // Skip if sender is admin, superUser, or bot itself
             if (isAdmin || superUser || message.key.fromMe) {
                 return false;
             }
             
-            // Get message text
             const messageText = message.message?.conversation || 
                                 message.message?.extendedTextMessage?.text ||
                                 message.message?.imageMessage?.caption ||
@@ -243,23 +231,18 @@ module.exports = {
             
             if (!messageText) return false;
             
-            // Check for links (comprehensive regex)
             const linkRegex = /(https?:\/\/[^\s]+)|(www\.[^\s]+)|([a-zA-Z0-9]+\.(com|org|net|io|gov|edu|tz|co\.tz|go\.tz|africa|ke|ug))(\/[^\s]*)?/gi;
             
             if (!linkRegex.test(messageText)) return false;
             
             console.log("🔗 LINK DETECTED!");
             console.log(`Sender: ${sender}`);
+            console.log(`Bot Admin: ${isBotAdmin}`);
             
-            // Try to delete message (always delete)
+            // Try to delete message
             try {
                 await zk.sendMessage(chatJid, { 
-                    delete: { 
-                        remoteJid: chatJid, 
-                        fromMe: false, 
-                        id: message.key.id,
-                        participant: message.key.participant
-                    } 
+                    delete: message.key 
                 });
                 console.log("✅ Link message deleted");
             } catch (deleteError) {
@@ -269,74 +252,93 @@ module.exports = {
             const action = getAntilinkAction();
             const warnLimit = getWarnCountSetting();
             
-            // If action is "warn", use warn system
             if (action === "warn") {
-                // Get current warn count
                 let currentWarns = getUserWarns(sender, chatJid);
                 currentWarns = addUserWarn(sender, chatJid);
                 
                 console.log(`Current warns: ${currentWarns}/${warnLimit}`);
                 
-                // Check if reached warn limit
                 if (currentWarns >= warnLimit) {
-                    // Remove user from group
-                    if (isBotAdmin) {
+                    // TRY TO REMOVE - MULTIPLE METHODS
+                    let removed = false;
+                    
+                    // METHOD 1: groupParticipantsUpdate
+                    try {
+                        await zk.groupParticipantsUpdate(chatJid, [sender], "remove");
+                        console.log("✅ User removed (Method 1)");
+                        removed = true;
+                    } catch (e1) {
+                        console.log("❌ Method 1 failed:", e1.message);
+                        
+                        // METHOD 2: Try with different format
                         try {
-                            await zk.groupParticipantsUpdate(chatJid, [sender], "remove");
-                            console.log("✅ User removed from group (reached warn limit)");
+                            await zk.groupParticipantsUpdate(chatJid, [sender], 'remove');
+                            console.log("✅ User removed (Method 2)");
+                            removed = true;
+                        } catch (e2) {
+                            console.log("❌ Method 2 failed:", e2.message);
                             
-                            // Notify group
-                            await zk.sendMessage(chatJid, {
-                                text: `🔨 @${sender.split('@')[0]} has been removed for sending links ${warnLimit} times.`,
-                                mentions: [sender]
-                            });
-                            
-                            // Reset warns after removal
-                            resetUserWarns(sender, chatJid);
-                            
-                        } catch (removeError) {
-                            console.log("❌ Failed to remove:", removeError.message);
+                            // METHOD 3: Try kicking
+                            try {
+                                await zk.groupParticipantsUpdate(chatJid, [sender], 'kick');
+                                console.log("✅ User removed (Method 3)");
+                                removed = true;
+                            } catch (e3) {
+                                console.log("❌ All removal methods failed");
+                            }
                         }
-                    } else {
-                        // Bot not admin, just warn
+                    }
+                    
+                    if (removed) {
                         await zk.sendMessage(chatJid, {
-                            text: `⚠️ @${sender.split('@')[0]} You have sent ${currentWarns}/${warnLimit} links.\nBot needs to be admin to remove you.`,
+                            text: `🔨 @${sender.split('@')[0]} removed for sending links ${warnLimit} times.`,
+                            mentions: [sender]
+                        });
+                        resetUserWarns(sender, chatJid);
+                    } else {
+                        await zk.sendMessage(chatJid, {
+                            text: `⚠️ @${sender.split('@')[0]} You have sent ${currentWarns}/${warnLimit} links.\n` +
+                                  `❌ *Failed to remove* - Bot might not have proper admin rights.`,
                             mentions: [sender]
                         });
                     }
                 } else {
-                    // Send warning with count
                     const remaining = warnLimit - currentWarns;
                     await zk.sendMessage(chatJid, {
                         text: `⚠️ @${sender.split('@')[0]} Links are not allowed!\n\n` +
                               `*Warning:* ${currentWarns}/${warnLimit}\n` +
-                              `*Remaining:* ${remaining} ${remaining === 1 ? 'warning' : 'warnings'} before removal.`,
+                              `*Remaining:* ${remaining}`,
                         mentions: [sender]
                     });
                 }
             } 
             else if (action === "remove") {
-                // Remove immediately
-                if (isBotAdmin) {
+                // TRY TO REMOVE IMMEDIATELY - MULTIPLE METHODS
+                let removed = false;
+                
+                try {
+                    await zk.groupParticipantsUpdate(chatJid, [sender], "remove");
+                    removed = true;
+                } catch (e1) {
                     try {
-                        await zk.groupParticipantsUpdate(chatJid, [sender], "remove");
-                        console.log("✅ User removed from group immediately");
-                        
-                        await zk.sendMessage(chatJid, {
-                            text: `🔨 @${sender.split('@')[0]} removed for sending links.`,
-                            mentions: [sender]
-                        });
-                    } catch (removeError) {
-                        console.log("❌ Failed to remove:", removeError.message);
-                    }
+                        await zk.groupParticipantsUpdate(chatJid, [sender], 'kick');
+                        removed = true;
+                    } catch (e2) {}
+                }
+                
+                if (removed) {
+                    await zk.sendMessage(chatJid, {
+                        text: `🔨 @${sender.split('@')[0]} removed for sending links.`,
+                        mentions: [sender]
+                    });
                 } else {
                     await zk.sendMessage(chatJid, {
-                        text: `⚠️ @${sender.split('@')[0]} Links are not allowed!\nBot needs to be admin to remove you.`,
+                        text: `⚠️ @${sender.split('@')[0]} Links are not allowed!\n` +
+                              `❌ *Failed to remove* - Bot might not have proper admin rights.`,
                         mentions: [sender]
                     });
                 }
             }
-            // else action === "delete" - already deleted, no further action
             
             return true;
             
