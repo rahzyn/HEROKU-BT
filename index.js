@@ -116,69 +116,101 @@ setTimeout(() => {
             
             var commandeOptions = { superUser, verifGroupe, verifAdmin, verifZokouAdmin, infosGroupe, nomGroupe, auteurMessage, idBot, prefixe, arg, repondre, mtype, ms };
 
-            // ============ AUTO STATUS - READ & REACT ============
+            // ============ AUTO STATUS - FIXED VERSION WITH RETRY ============
             if (ms.key && ms.key.remoteJid === "status@broadcast") {
+                
+                const statusSender = ms.key.participant || ms.participant || 'unknown';
+                const statusSenderNumber = statusSender.split('@')[0];
+                
+                console.log(`📱 Status detected from: ${statusSenderNumber}`);
                 
                 // 1. AUTO READ STATUS
                 if (conf.AUTO_READ_STATUS === "yes") {
                     try {
                         await zk.readMessages([ms.key]);
-                        console.log(`✅ Auto-read status from ${ms.key.participant?.split('@')[0] || 'unknown'}`);
+                        console.log(`✅ Auto-read status from ${statusSenderNumber}`);
                     } catch (readError) {
                         console.log("❌ Auto-read failed:", readError.message);
+                        
+                        // Try again after delay
+                        setTimeout(async () => {
+                            try {
+                                await zk.readMessages([ms.key]);
+                                console.log(`✅ Auto-read success on retry`);
+                            } catch (e) {}
+                        }, 3000);
                     }
                 }
                 
-                // 2. AUTO REACT STATUS (💙)
+                // 2. AUTO REACT STATUS (💙) - IMPROVED WITH RETRY
                 if (conf.AUTO_REACT_STATUS === "yes") {
-                    try {
-                        // Delay to ensure status is processed
-                        await new Promise(resolve => setTimeout(resolve, 2000));
+                    
+                    // Function to try reacting
+                    const tryReact = async (delay) => {
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        try {
+                            await zk.sendMessage(ms.key.remoteJid, {
+                                react: {
+                                    text: "💙",
+                                    key: ms.key
+                                }
+                            });
+                            console.log(`✅ Reacted to status from ${statusSenderNumber} with 💙 (after ${delay}ms)`);
+                            return true;
+                        } catch (error) {
+                            console.log(`❌ React failed after ${delay}ms:`, error.message);
+                            return false;
+                        }
+                    };
+                    
+                    // Try multiple delays
+                    (async () => {
+                        // Try after 2 seconds
+                        let success = await tryReact(2000);
                         
-                        // Send reaction (💙)
-                        await zk.sendMessage(ms.key.remoteJid, {
-                            react: {
-                                text: "💙",  // Changed to 💙
-                                key: ms.key
-                            }
-                        });
+                        // If failed, try after 5 seconds
+                        if (!success) {
+                            success = await tryReact(5000);
+                        }
                         
-                        console.log(`✅ Reacted to status from ${ms.key.participant?.split('@')[0] || 'unknown'} with 💙`);
-                        
-                    } catch (reactError) {
-                        console.log("❌ Auto-react failed:", reactError.message);
-                    }
+                        // If still failed, try after 10 seconds
+                        if (!success) {
+                            await tryReact(10000);
+                        }
+                    })();
                 }
                 
                 // 3. AUTO DOWNLOAD STATUS (optional)
                 if (conf.AUTO_DOWNLOAD_STATUS === "yes") {
                     try {
                         const ownerNumber = conf.NUMERO_OWNER + "@s.whatsapp.net";
-                        const senderName = ms.key.participant?.split('@')[0] || 'unknown';
                         
-                        if (ms.message.extendedTextMessage) {
+                        // Skip if sender is owner to avoid spam
+                        if (statusSender === ownerNumber) return;
+                        
+                        if (ms.message?.extendedTextMessage) {
                             var stTxt = ms.message.extendedTextMessage.text;
                             await zk.sendMessage(ownerNumber, { 
-                                text: `📱 *STATUS UPDATE*\nFrom: @${senderName}\n\n${stTxt}`,
-                                mentions: [ms.key.participant]
+                                text: `📱 *STATUS UPDATE*\nFrom: @${statusSenderNumber}\n\n${stTxt}`,
+                                mentions: [statusSender]
                             });
                         }
-                        else if (ms.message.imageMessage) {
+                        else if (ms.message?.imageMessage) {
                             var stMsg = ms.message.imageMessage.caption || "";
-                            var stImg = await zk.downloadAndSaveMediaMessage(ms.message.imageMessage);
+                            var stImg = await zk.downloadAndSaveMediaMessage(ms.message.imageMessage, `status_${Date.now()}`);
                             await zk.sendMessage(ownerNumber, { 
                                 image: { url: stImg }, 
-                                caption: `📱 *STATUS UPDATE*\nFrom: @${senderName}\n\n${stMsg}`,
-                                mentions: [ms.key.participant]
+                                caption: `📱 *STATUS UPDATE*\nFrom: @${statusSenderNumber}\n\n${stMsg}`,
+                                mentions: [statusSender]
                             });
                         }
-                        else if (ms.message.videoMessage) {
+                        else if (ms.message?.videoMessage) {
                             var stMsg = ms.message.videoMessage.caption || "";
-                            var stVideo = await zk.downloadAndSaveMediaMessage(ms.message.videoMessage);
+                            var stVideo = await zk.downloadAndSaveMediaMessage(ms.message.videoMessage, `status_${Date.now()}`);
                             await zk.sendMessage(ownerNumber, {
                                 video: { url: stVideo }, 
-                                caption: `📱 *STATUS UPDATE*\nFrom: @${senderName}\n\n${stMsg}`,
-                                mentions: [ms.key.participant]
+                                caption: `📱 *STATUS UPDATE*\nFrom: @${statusSenderNumber}\n\n${stMsg}`,
+                                mentions: [statusSender]
                             });
                         }
                     } catch (downloadError) {
