@@ -27,8 +27,7 @@ function detectBug(message) {
     { pattern: /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>|<[^>]+>/i, type: "HTML_INJECTION", desc: "HTML/Script tag detected" },
     { pattern: /@everyone|@here|@all/i, type: "MASS_MENTION", desc: "Mass mention attempt" },
     { pattern: /(.)\1{20,}/, type: "REPEATED_CHARS", desc: "Too many repeated characters" },
-    { pattern: /(https?:\/\/[^\s]+){3,}/, type: "URL_SPAM", desc: "Multiple URLs detected" },
-    { pattern: /(\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/g, type: "PHONE_NUMBER", desc: "Phone number detected" }
+    { pattern: /(https?:\/\/[^\s]+){3,}/, type: "URL_SPAM", desc: "Multiple URLs detected" }
   ];
   
   for (let bug of bugPatterns) {
@@ -63,40 +62,55 @@ async function processIncomingMessage(zk, message, sender) {
     if (detection.isBug) {
       console.log(`🚨 BUG DETECTED: ${detection.type} from ${sender}`);
       
-      // 🔥 TRY TO DELETE MESSAGE (kwanza kabisa)
+      // TRY TO DELETE MESSAGE (kama inawezekana)
+      let deleted = false;
       try {
-        const deleteKey = {
-          remoteJid: message.key.remoteJid,
-          fromMe: false,
-          id: message.key.id,
-          participant: message.key.participant
-        };
-        
-        await zk.sendMessage(message.key.remoteJid, { 
-          delete: deleteKey 
-        });
-        console.log("✅ Message deleted successfully");
+        // Kwanza jaribu kufuta kwenye group
+        if (message.key.remoteJid.endsWith('@g.us')) {
+          const deleteKey = {
+            remoteJid: message.key.remoteJid,
+            fromMe: false,
+            id: message.key.id,
+            participant: message.key.participant
+          };
+          
+          await zk.sendMessage(message.key.remoteJid, { 
+            delete: deleteKey 
+          });
+          console.log("✅ Message deleted successfully");
+          deleted = true;
+        } else {
+          console.log("ℹ️ Cannot delete in private chat - WhatsApp limitation");
+        }
       } catch (deleteError) {
         console.log("❌ Delete failed:", deleteError.message);
       }
       
-      // 🔥 CHECK IF IT'S A GROUP
-      const isGroup = message.key.remoteJid.endsWith('@g.us');
-      
-      // 🔥 BLOCK THE USER (hii inafanya kazi kwa DM na Group)
+      // 🔥 BLOCK THE USER - HII NDIYO MUHIMU ZAIDI!
       let blockSuccess = false;
       try {
-        // Block the user
+        // Jaribu kublock kwa kutumia jid kamili
         await zk.updateBlockStatus(sender, 'block');
         console.log(`✅ User ${sender} blocked successfully`);
         blockSuccess = true;
       } catch (blockError) {
         console.log("❌ Block failed:", blockError.message);
+        
+        // Jaribu njia nyingine ya kublock
+        try {
+          // Tumia namba tu bila @s.whatsapp.net
+          const numberOnly = sender.split('@')[0];
+          await zk.updateBlockStatus(numberOnly + '@s.whatsapp.net', 'block');
+          console.log(`✅ User ${numberOnly} blocked successfully (second attempt)`);
+          blockSuccess = true;
+        } catch (blockError2) {
+          console.log("❌ Block failed again:", blockError2.message);
+        }
       }
       
-      // 🔥 REMOVE FROM GROUP (kama ni group na bot iko admin)
+      // REMOVE FROM GROUP (kama ni group)
       let removeSuccess = false;
-      if (isGroup && blockSuccess) {
+      if (message.key.remoteJid.endsWith('@g.us')) {
         try {
           await zk.groupParticipantsUpdate(
             message.key.remoteJid, 
@@ -106,23 +120,27 @@ async function processIncomingMessage(zk, message, sender) {
           console.log(`✅ User removed from group`);
           removeSuccess = true;
         } catch (removeError) {
-          console.log("❌ Remove from group failed (bot might not be admin):", removeError.message);
+          console.log("❌ Remove from group failed:", removeError.message);
         }
       }
       
-      // 🔥 SEND NOTIFICATION (kwa group au DM)
+      // SEND NOTIFICATION
       let notification = `⚠️ *ANTIBUG SYSTEM - ACTION TAKEN*\n\n`;
       notification += `📛 *Reason:* ${detection.description}\n`;
       notification += `🔍 *Type:* ${detection.type}\n`;
       notification += `👤 *User:* @${sender.split('@')[0]}\n\n`;
-      notification += `✅ *Message deleted*\n`;
-      notification += `🔨 *User blocked* ${blockSuccess ? '✅' : '❌'}\n`;
       
-      if (isGroup) {
-        notification += `👋 *Removed from group* ${removeSuccess ? '✅' : '(bot needs admin)'}\n`;
+      if (deleted) {
+        notification += `✅ *Message deleted*\n`;
+      } else {
+        notification += `❌ *Could not delete* (WhatsApp limitation in private chat)\n`;
       }
       
-      notification += `\n_This is automatic protection - user cannot message bot again_`;
+      notification += `🔨 *User blocked* ${blockSuccess ? '✅' : '❌'}\n`;
+      
+      if (message.key.remoteJid.endsWith('@g.us')) {
+        notification += `👋 *Removed from group* ${removeSuccess ? '✅' : '(bot needs admin)'}\n`;
+      }
       
       // Send notification to the group/chat where bug occurred
       await zk.sendMessage(
@@ -133,8 +151,8 @@ async function processIncomingMessage(zk, message, sender) {
         }
       );
       
-      // 🔥 ALSO NOTIFY OWNER (kwa DM)
-      const ownerJid = conf.NUMERO_OWNER + "@s.whatsapp.net";
+      // NOTIFY OWNER
+      const ownerJid = require("../set").NUMERO_OWNER + "@s.whatsapp.net";
       if (ownerJid && ownerJid !== sender) {
         let ownerNotify = `🚨 *ANTIBUG ALERT - USER BLOCKED*\n\n`;
         ownerNotify += `📛 *Reason:* ${detection.description}\n`;
@@ -142,7 +160,7 @@ async function processIncomingMessage(zk, message, sender) {
         ownerNotify += `👤 *User:* ${sender.split('@')[0]}\n`;
         ownerNotify += `📱 *Number:* ${sender}\n`;
         ownerNotify += `💬 *Chat:* ${message.key.remoteJid}\n\n`;
-        ownerNotify += `✅ User has been blocked automatically.`;
+        ownerNotify += `✅ Block status: ${blockSuccess ? 'SUCCESS' : 'FAILED'}`;
         
         await zk.sendMessage(ownerJid, { text: ownerNotify });
       }
@@ -150,7 +168,7 @@ async function processIncomingMessage(zk, message, sender) {
       return { 
         blocked: true, 
         reason: detection,
-        deleted: true,
+        deleted: deleted,
         userBlocked: blockSuccess 
       };
     }
