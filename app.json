@@ -43,7 +43,7 @@
       "required": false
     },
     "PUBLIC_MODE": {
-      "description": "type yes to put your bot on public mode or no to put it on private mod",
+      "description": "type yes to put your bot on public mode or no to put it on private mode",
       "value": "no",
       "required": true
     },
