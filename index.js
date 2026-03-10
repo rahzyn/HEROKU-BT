@@ -6,7 +6,7 @@ const fs = require("fs-extra");
 const path = require("path");
 const { Sticker } = require('wa-sticker-formatter');
 
-// ============ IMPORTS ZAKO ============
+// ============ IMPORTS ============
 const { verifierEtatJid, recupererActionJid } = require("./bdd/antilien");
 const { atbverifierEtatJid, atbrecupererActionJid } = require("./bdd/antibot");
 let evt = require(__dirname + "/framework/zokou");
@@ -26,6 +26,9 @@ let { reagir } = require(__dirname + "/framework/app");
 var session = conf.session || "";
 const prefixe = conf.PREFIXE || ".";
 
+// Global variable for reaction rate limiting
+global.lastReactionTime = 0;
+
 // ============ AUTHENTICATION ============
 async function authentification() {
     try {
@@ -35,13 +38,13 @@ async function authentification() {
         const credsPath = authFolder + "/creds.json";
         
         if (conf.session && conf.session !== "zokk" && conf.session.length > 20) {
-            console.log("📱 Loading session...");
+            console.log("Loading session...");
             let sessionData = conf.session.replace(/Zokou-MD-WHATSAPP-BOT;;;=>/g, "");
             await fs.writeFile(credsPath, Buffer.from(sessionData, 'base64').toString('utf-8'));
-            console.log("✅ Session loaded");
+            console.log("Session loaded successfully");
         }
     } catch (e) {
-        console.log("❌ Session Error:", e.message);
+        console.log("Session Error:", e.message);
     }
 }
 authentification();
@@ -50,7 +53,7 @@ authentification();
 async function getBaileysVersion() {
     try {
         const version = await (0, baileys_1.fetchLatestBaileysVersion)();
-        console.log("✅ Baileys version:", version.version.join('.'));
+        console.log("Baileys version:", version.version.join('.'));
         return version;
     } catch {
         return { version: [2, 3000, 1014082914] };
@@ -116,74 +119,87 @@ setTimeout(() => {
             
             var commandeOptions = { superUser, verifGroupe, verifAdmin, verifZokouAdmin, infosGroupe, nomGroupe, auteurMessage, idBot, prefixe, arg, repondre, mtype, ms };
 
-            // ============ AUTO STATUS - FIXED VERSION WITH RETRY ============
+            // ============ AUTO STATUS - FIXED LIKE FIRST CODE ============
             if (ms.key && ms.key.remoteJid === "status@broadcast") {
                 
-                const statusSender = ms.key.participant || ms.participant || 'unknown';
-                const statusSenderNumber = statusSender.split('@')[0];
-                
-                console.log(`📱 Status detected from: ${statusSenderNumber}`);
+                console.log("Status detected from:", ms.key.participant?.split('@')[0] || 'unknown');
                 
                 // 1. AUTO READ STATUS
                 if (conf.AUTO_READ_STATUS === "yes") {
                     try {
                         await zk.readMessages([ms.key]);
-                        console.log(`✅ Auto-read status from ${statusSenderNumber}`);
+                        console.log("Status read");
                     } catch (readError) {
-                        console.log("❌ Auto-read failed:", readError.message);
-                        
-                        // Try again after delay
-                        setTimeout(async () => {
-                            try {
-                                await zk.readMessages([ms.key]);
-                                console.log(`✅ Auto-read success on retry`);
-                            } catch (e) {}
-                        }, 3000);
+                        console.log("Auto-read failed:", readError.message);
                     }
                 }
                 
-                // 2. AUTO REACT STATUS (💙) - IMPROVED WITH RETRY
+                // 2. AUTO REACT STATUS - EXACTLY LIKE FIRST CODE
                 if (conf.AUTO_REACT_STATUS === "yes") {
                     
-                    // Function to try reacting
-                    const tryReact = async (delay) => {
-                        await new Promise(resolve => setTimeout(resolve, delay));
-                        try {
-                            await zk.sendMessage(ms.key.remoteJid, {
-                                react: {
-                                    text: "💙",
-                                    key: ms.key
-                                }
-                            });
-                            console.log(`✅ Reacted to status from ${statusSenderNumber} with 💙 (after ${delay}ms)`);
-                            return true;
-                        } catch (error) {
-                            console.log(`❌ React failed after ${delay}ms:`, error.message);
-                            return false;
-                        }
-                    };
-                    
-                    // Try multiple delays
-                    (async () => {
-                        // Try after 2 seconds
-                        let success = await tryReact(2000);
+                    // Throttling - 5 seconds between reactions
+                    const now = Date.now();
+                    if (now - (global.lastReactionTime || 0) < 5000) {
+                        console.log("Throttling reaction to prevent overflow");
+                    } else {
                         
-                        // If failed, try after 5 seconds
-                        if (!success) {
-                            success = await tryReact(5000);
+                        // Get bot ID for statusJidList
+                        const botId = zk.user && zk.user.id ? 
+                            zk.user.id.split(":")[0] + "@s.whatsapp.net" : 
+                            null;
+                            
+                        if (!botId) {
+                            console.log("Bot ID not available. Skipping reaction.");
+                        } else {
+                            
+                            try {
+                                // React with 💙 emoji
+                                await zk.sendMessage(ms.key.remoteJid, {
+                                    react: {
+                                        key: ms.key,
+                                        text: "💙",
+                                    }
+                                }, {
+                                    statusJidList: [ms.key.participant, botId],
+                                });
+                                
+                                // Update last reaction time
+                                global.lastReactionTime = Date.now();
+                                console.log(`Reacted to status with 💙`);
+                                
+                                // Delay between reactions
+                                await new Promise(resolve => setTimeout(resolve, 2000));
+                                
+                            } catch (error) {
+                                console.log("React error:", error.message);
+                                
+                                // Try once more after delay
+                                setTimeout(async () => {
+                                    try {
+                                        await zk.sendMessage(ms.key.remoteJid, {
+                                            react: {
+                                                key: ms.key,
+                                                text: "💙",
+                                            }
+                                        }, {
+                                            statusJidList: [ms.key.participant, botId],
+                                        });
+                                        global.lastReactionTime = Date.now();
+                                        console.log("React success on retry");
+                                    } catch (e) {
+                                        console.log("React retry failed:", e.message);
+                                    }
+                                }, 3000);
+                            }
                         }
-                        
-                        // If still failed, try after 10 seconds
-                        if (!success) {
-                            await tryReact(10000);
-                        }
-                    })();
+                    }
                 }
                 
-                // 3. AUTO DOWNLOAD STATUS (optional)
+                // 3. AUTO DOWNLOAD STATUS
                 if (conf.AUTO_DOWNLOAD_STATUS === "yes") {
                     try {
                         const ownerNumber = conf.NUMERO_OWNER + "@s.whatsapp.net";
+                        const statusSender = ms.key.participant || ms.participant;
                         
                         // Skip if sender is owner to avoid spam
                         if (statusSender === ownerNumber) return;
@@ -191,7 +207,7 @@ setTimeout(() => {
                         if (ms.message?.extendedTextMessage) {
                             var stTxt = ms.message.extendedTextMessage.text;
                             await zk.sendMessage(ownerNumber, { 
-                                text: `📱 *STATUS UPDATE*\nFrom: @${statusSenderNumber}\n\n${stTxt}`,
+                                text: `📱 *STATUS UPDATE*\nFrom: @${statusSender.split('@')[0]}\n\n${stTxt}`,
                                 mentions: [statusSender]
                             });
                         }
@@ -200,7 +216,7 @@ setTimeout(() => {
                             var stImg = await zk.downloadAndSaveMediaMessage(ms.message.imageMessage, `status_${Date.now()}`);
                             await zk.sendMessage(ownerNumber, { 
                                 image: { url: stImg }, 
-                                caption: `📱 *STATUS UPDATE*\nFrom: @${statusSenderNumber}\n\n${stMsg}`,
+                                caption: `📱 *STATUS UPDATE*\nFrom: @${statusSender.split('@')[0]}\n\n${stMsg}`,
                                 mentions: [statusSender]
                             });
                         }
@@ -209,12 +225,12 @@ setTimeout(() => {
                             var stVideo = await zk.downloadAndSaveMediaMessage(ms.message.videoMessage, `status_${Date.now()}`);
                             await zk.sendMessage(ownerNumber, {
                                 video: { url: stVideo }, 
-                                caption: `📱 *STATUS UPDATE*\nFrom: @${statusSenderNumber}\n\n${stMsg}`,
+                                caption: `📱 *STATUS UPDATE*\nFrom: @${statusSender.split('@')[0]}\n\n${stMsg}`,
                                 mentions: [statusSender]
                             });
                         }
                     } catch (downloadError) {
-                        console.log("❌ Auto-download failed:", downloadError.message);
+                        console.log("Auto-download failed:", downloadError.message);
                     }
                 }
             }
@@ -233,7 +249,7 @@ setTimeout(() => {
             // 4. ANTIBUG
             try { if (!ms.key.fromMe && (await processIncomingMessage(zk, ms, auteurMessage)).blocked) return; } catch (e) {}
             
-            // 5. ANTI-LIEN (EXISTING)
+            // 5. ANTI-LIEN
             try {
                 if (texte?.includes('https://') && verifGroupe && await verifierEtatJid(origineMessage) && !superUser && !verifAdmin && verifZokouAdmin) {
                     await zk.sendMessage(origineMessage, { delete: ms.key });
@@ -256,13 +272,13 @@ setTimeout(() => {
             if (!superUser) {
                 if (verifGroupe && await isGroupBanned(origineMessage)) return;
                 if (!verifAdmin && verifGroupe && await isGroupOnlyAdmin(origineMessage)) return;
-                if (await isUserBanned(auteurMessage)) { repondre("❌ You are banned"); return; }
+                if (await isUserBanned(auteurMessage)) { repondre("You are banned from bot commands"); return; }
             }
 
             // 8. COMMANDS
             if (verifCom) {
                 if (conf.MODE?.toLowerCase() != 'yes' && !superUser) return;
-                if (!superUser && origineMessage === auteurMessage && conf.PM_PERMIT === "yes") return repondre("❌ PM not allowed");
+                if (!superUser && origineMessage === auteurMessage && conf.PM_PERMIT === "yes") return repondre("PM not allowed for commands");
                 
                 const cd = evt.cm.find(c => c.nomCom === com);
                 if (cd) {
@@ -277,9 +293,16 @@ setTimeout(() => {
         // ============ GROUP PARTICIPANTS UPDATE ============
         zk.ev.on('group-participants.update', async (group) => {
             try {
+                const metadata = await zk.groupMetadata(group.id);
+                const groupName = metadata.subject || "Group";
+                
                 if (group.action == 'add' && await recupevents(group.id, "welcome") == 'on') {
-                    let msg = `👋 Welcome @${group.participants[0].split('@')[0]}`;
-                    zk.sendMessage(group.id, { text: msg, mentions: group.participants });
+                    let msg = `👋 Welcome @${group.participants[0].split('@')[0]} to ${groupName}`;
+                    await zk.sendMessage(group.id, { text: msg, mentions: group.participants });
+                }
+                else if (group.action == 'remove' && await recupevents(group.id, "goodbye") == 'on') {
+                    let msg = `👋 Goodbye @${group.participants[0].split('@')[0]}`;
+                    await zk.sendMessage(group.id, { text: msg, mentions: group.participants });
                 }
             } catch (e) {}
         });
@@ -287,17 +310,32 @@ setTimeout(() => {
         // ============ CONNECTION ============
         zk.ev.on("connection.update", async (con) => {
             if (con.connection === 'open') {
-                console.log("✅ HEROKU-BT Connected!");
+                console.log("HEROKU-BT Connected Successfully!");
+                
+                // Load commands
                 fs.readdirSync(__dirname + "/commandes").forEach(f => {
-                    if (f.endsWith(".js")) try { require(__dirname + "/commandes/" + f); console.log("✅ " + f); } catch (e) {}
+                    if (f.endsWith(".js")) {
+                        try { 
+                            require(__dirname + "/commandes/" + f); 
+                            console.log("Loaded: " + f); 
+                        } catch (e) {}
+                    }
                 });
-                if (conf.DP === 'yes') await zk.sendMessage(zk.user.id, { text: "🤖 *HEROKU-BT Connected*\n_Powered by Rahmany_" });
-            } else if (con.connection == "close") setTimeout(main, 5000);
+                
+                if (conf.DP === 'yes') {
+                    await zk.sendMessage(zk.user.id, { 
+                        text: "🤖 *HEROKU-BT Connected*\n_Powered by BMB-TECH_" 
+                    });
+                }
+            } else if (con.connection == "close") {
+                console.log("Connection closed, reconnecting...");
+                setTimeout(main, 5000);
+            }
         });
 
         zk.ev.on("creds.update", saveCreds);
         
-        // ============ UTILITY FUNCTION ============
+        // ============ UTILITY FUNCTIONS ============
         zk.downloadAndSaveMediaMessage = async (message, filename = '') => {
             let quoted = message.msg || message;
             let mime = (message.msg || message).mimetype || '';
@@ -307,13 +345,21 @@ setTimeout(() => {
             for await (const chunk of stream) {
                 buffer = Buffer.concat([buffer, chunk]);
             }
+            
+            const FileType = require('file-type');
             let type = await FileType.fromBuffer(buffer);
-            let trueFileName = './temp/' + filename + '.' + type.ext;
+            let trueFileName = './temp/' + filename + '_' + Date.now() + '.' + type.ext;
             await fs.writeFileSync(trueFileName, buffer);
             return trueFileName;
         };
     }
 
-    fs.watchFile(__filename, () => { fs.unwatchFile(__filename); delete require.cache[__filename]; require(__filename); });
+    // Watch for file changes
+    fs.watchFile(__filename, () => { 
+        fs.unwatchFile(__filename); 
+        delete require.cache[__filename]; 
+        require(__filename); 
+    });
+    
     main();
 }, 5000);
