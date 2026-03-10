@@ -24,7 +24,7 @@ module.exports = {
     
     // ============ AUTO STATUS SETTINGS ============
     AUTO_READ_STATUS: process.env.AUTO_READ_STATUS || "yes",        // Soma status
-    AUTO_REACT_STATUS: process.env.AUTO_REACT_STATUS || 'yes',       // React kwa status (💙)
+    AUTO_REACT_STATUS: process.env.AUTO_REACT_STATUS || 'yes',
     AUTO_DOWNLOAD_STATUS: process.env.AUTO_DOWNLOAD_STATUS || 'no',  // Download status kwa DM
     
     // ============ ANTI-DELETE SETTINGS ============
