@@ -1,95 +1,106 @@
 const { zokou } = require("../framework/zokou");
-const { getContentType } = require("@whiskeysockets/baileys");
-const fs = require('fs-extra');
-const { Sticker, StickerTypes } = require('wa-sticker-formatter');
+const conf = require("../set");
 
-zokou({ nomCom: "vv", aliases: ["send", "keep", "dm"], categorie: "General" }, async (dest, zk, commandeOptions) => {
-  const { repondre, msgRepondu, auteurMessage, ms } = commandeOptions;
+zokou({
+    nomCom: "vv",
+    categorie: "General",
+    reaction: "👁️",
+    desc: "Save view once media (sends to owner DM)",
+    fromMe: true
+}, async (dest, zk, commandeOptions) => {
+    const { ms, msgRepondu, repondre, auteurMessage } = commandeOptions;
 
-  if (!msgRepondu) {
-    return repondre("*❌ Please reply to or mention a message you want to save*");
-  }
-
-  try {
-    // Send processing message
-    await repondre("*⏳ Processing media... Sending to your DM*");
-
-    let msg;
-    let mediaPath = null;
-
-    // Check for different message types and handle accordingly
-    if (msgRepondu.imageMessage) {
-      mediaPath = await zk.downloadAndSaveMediaMessage(msgRepondu.imageMessage);
-      msg = { 
-        image: { url: mediaPath }, 
-        caption: msgRepondu.imageMessage.caption || "📸 *Image saved from view-once*" 
-      };
-    } 
-    else if (msgRepondu.videoMessage) {
-      mediaPath = await zk.downloadAndSaveMediaMessage(msgRepondu.videoMessage);
-      msg = { 
-        video: { url: mediaPath }, 
-        caption: msgRepondu.videoMessage.caption || "🎥 *Video saved from view-once*" 
-      };
-    } 
-    else if (msgRepondu.audioMessage) {
-      mediaPath = await zk.downloadAndSaveMediaMessage(msgRepondu.audioMessage);
-      msg = { 
-        audio: { url: mediaPath }, 
-        mimetype: 'audio/mp4',
-        ptt: msgRepondu.audioMessage.ptt || false // Voice note if it was voice note
-      };
-    } 
-    else if (msgRepondu.stickerMessage) {
-      mediaPath = await zk.downloadAndSaveMediaMessage(msgRepondu.stickerMessage);
-      const stickerMess = new Sticker(mediaPath, {
-        pack: '𝐊𝐈𝐍𝐆𝐒-𝐌𝐃',
-        author: 'Bot',
-        type: StickerTypes.CROPPED,
-        categories: ["🤩", "🎉"],
-        id: "12345",
-        quality: 70,
-        background: "transparent",
-      });
-      const stickerBuffer2 = await stickerMess.toBuffer();
-      msg = { sticker: stickerBuffer2 };
-    } 
-    else if (msgRepondu.documentMessage) {
-      mediaPath = await zk.downloadAndSaveMediaMessage(msgRepondu.documentMessage);
-      msg = { 
-        document: { url: mediaPath },
-        fileName: msgRepondu.documentMessage.fileName || 'document',
-        mimetype: msgRepondu.documentMessage.mimetype || 'application/octet-stream',
-        caption: "📄 *Document saved*"
-      };
-    }
-    else {
-      // Text message
-      msg = { text: msgRepondu.conversation || msgRepondu.extendedTextMessage?.text || "Message saved" };
+    if (!msgRepondu) {
+        return repondre("❌ *Reply to a view once message!*");
     }
 
-    // Send to user's DM (private chat)
-    const userDM = auteurMessage; // The user who sent the command
-    
-    if (msg) {
-      await zk.sendMessage(userDM, msg);
-      
-      // Clean up downloaded file if it exists
-      if (mediaPath && fs.existsSync(mediaPath)) {
-        fs.unlinkSync(mediaPath);
-      }
-      
-      // Confirm in the group/channel that it was sent to DM
-      await repondre("*✅ Media has been sent to your DM! Check your private messages*");
-    }
+    try {
+        // Get the actual message content
+        let content = msgRepondu;
+        
+        // Unwrap view once if present
+        if (msgRepondu.viewOnceMessageV2) {
+            content = msgRepondu.viewOnceMessageV2.message;
+        } else if (msgRepondu.viewOnceMessage) {
+            content = msgRepondu.viewOnceMessage.message;
+        }
 
-  } catch (error) {
-    console.error("Error processing the message:", error);
-    await repondre('*❌ An error occurred while processing your request:*\n' + error.message);
-    
-    // Clean up if file exists even after error
-    if (mediaPath && fs.existsSync(mediaPath)) {
-      fs.unlinkSync(mediaPath);
+        // Check for media
+        let mediaMsg = null;
+        let type = '';
+        
+        if (content.imageMessage) {
+            mediaMsg = content.imageMessage;
+            type = 'image';
+        } else if (content.videoMessage) {
+            mediaMsg = content.videoMessage;
+            type = 'video';
+        } else if (content.audioMessage) {
+            mediaMsg = content.audioMessage;
+            type = 'audio';
+        } else if (content.stickerMessage) {
+            mediaMsg = content.stickerMessage;
+            type = 'sticker';
+        }
+
+        if (!mediaMsg) {
+            return repondre("❌ *Not a view once message!*");
+        }
+
+        // Download
+        await repondre(`⏳ *Downloading ${type}...*`);
+        const mediaPath = await zk.downloadAndSaveMediaMessage(mediaMsg);
+
+        // Owner DM
+        const ownerJid = conf.NUMERO_OWNER + "@s.whatsapp.net";
+        const sender = auteurMessage.split('@')[0];
+
+        // Prepare caption
+        const caption = `🗑️ *VIEW ONCE ${type.toUpperCase()}*\n👤 *From:* @${sender}`;
+
+        // Send based on type
+        if (type === 'image') {
+            await zk.sendMessage(ownerJid, {
+                image: { url: mediaPath },
+                caption: caption,
+                mentions: [auteurMessage]
+            });
+        } 
+        else if (type === 'video') {
+            await zk.sendMessage(ownerJid, {
+                video: { url: mediaPath },
+                caption: caption,
+                mentions: [auteurMessage]
+            });
+        } 
+        else if (type === 'audio') {
+            await zk.sendMessage(ownerJid, {
+                audio: { url: mediaPath },
+                mimetype: 'audio/mp4'
+            });
+            await zk.sendMessage(ownerJid, {
+                text: caption,
+                mentions: [auteurMessage]
+            });
+        } 
+        else if (type === 'sticker') {
+            await zk.sendMessage(ownerJid, {
+                sticker: { url: mediaPath }
+            });
+            await zk.sendMessage(ownerJid, {
+                text: caption,
+                mentions: [auteurMessage]
+            });
+        }
+
+        // Clean up
+        const fs = require("fs-extra");
+        if (fs.existsSync(mediaPath)) fs.unlinkSync(mediaPath);
+
+        await repondre(`✅ *View once ${type} sent to owner DM!*`);
+
+    } catch (error) {
+        console.error("❌ Error:", error);
+        await repondre(`❌ *Error:* ${error.message}`);
     }
-  }
 });
