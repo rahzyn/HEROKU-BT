@@ -13,9 +13,9 @@ module.exports = {
     session: process.env.SESSION_ID || 'zokk',
     
     // ============ BOT SETTINGS ============
-    PREFIXE: process.env.PREFIX || "+",
-    OWNER_NAME: process.env.OWNER_NAME || "chugastan",
-    NUMERO_OWNER: process.env.NUMERO_OWNER || "255693629079",
+    PREFIXE: process.env.PREFIX || ".",
+    OWNER_NAME: process.env.OWNER_NAME || "Rahmani",
+    NUMERO_OWNER: process.env.NUMERO_OWNER || "255760164530",
     BOT: process.env.BOT_NAME || 'HEROKU-BT',
     MODE: process.env.PUBLIC_MODE || "no",
     PM_PERMIT: process.env.PM_PERMIT || 'no',
