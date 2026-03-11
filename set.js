@@ -24,11 +24,11 @@ module.exports = {
     
     // ============ AUTO STATUS SETTINGS ============
     AUTO_READ_STATUS: process.env.AUTO_READ_STATUS || "yes",        // Soma status
-    AUTO_REACT_STATUS: process.env.AUTO_REACT_STATUS || 'yes',
+    AUTO_REACT_STATUS: process.env.AUTO_REACT_STATUS || 'yes',       // React kwa status
     AUTO_DOWNLOAD_STATUS: process.env.AUTO_DOWNLOAD_STATUS || 'no',  // Download status kwa DM
     
-    // ============ ANTI-DELETE SETTINGS ============
-    ADM: process.env.ANTI_DELETE_MESSAGE || 'yes',
+    // ============ ANTI-DELETE SETTINGS (IMPORTANT!) ============
+    ANTIDELETE: process.env.ANTI_DELETE || 'yes',                    // 🔥 THIS IS WHAT THE INDEX USES
     
     // ============ WARN SYSTEM ============
     WARN_COUNT: process.env.WARN_COUNT || '3',
@@ -49,6 +49,13 @@ module.exports = {
         ? "postgres://db_7xp9_user:6hwmTN7rGPNsjlBEHyX49CXwrG7cDeYi@dpg-cj7ldu5jeehc73b2p7g0-a.oregon-postgres.render.com/db_7xp9" 
         : "postgres://db_7xp9_user:6hwmTN7rGPNsjlBEHyX49CXwrG7cDeYi@dpg-cj7ldu5jeehc73b2p7g0-a.oregon-postgres.render.com/db_7xp9",
 };
+
+console.log("✅ Rahmani Configuration Loaded");
+console.log(`📱 Prefix: ${module.exports.PREFIXE}`);
+console.log(`👤 Owner: ${module.exports.OWNER_NAME}`);
+console.log(`📞 Owner Number: ${module.exports.NUMERO_OWNER}`);
+console.log(`🔰 Mode: ${module.exports.MODE === 'yes' ? 'Public' : 'Private'}`);
+console.log(`🗑️ Anti-Delete: ${module.exports.ANTIDELETE === 'yes' ? 'ON' : 'OFF'}`);
 
 let fichier = require.resolve(__filename);
 fs.watchFile(fichier, () => {
