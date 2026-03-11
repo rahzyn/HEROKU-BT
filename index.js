@@ -19,7 +19,6 @@ const { recupevents } = require('./bdd/welcome');
 
 // ============ FEATURE IMPORTS ============
 const { processIncomingMessage } = require("./framework/bugDetector");
-const { handleDeletedMessage } = require("./commandes/antidelete");
 const { handleAntilink } = require("./commandes/antilink");
 
 let { reagir } = require(__dirname + "/framework/app");
@@ -28,9 +27,6 @@ const prefixe = conf.PREFIXE || ".";
 
 // Global variable for reaction rate limiting
 global.lastReactionTime = 0;
-
-// Global store for anti-delete
-global.messageStore = {};
 
 // ============ AUTHENTICATION ============
 async function authentification() {
@@ -84,10 +80,11 @@ setTimeout(() => {
 
         store.bind(zk.ev);
 
-        // ============ ANTIDELETE HANDLER - DIRECT FROM FIRST CODE ============
-        // Message storage for anti-delete
+        // ============ ANTI-DELETE FROM FIRST CODE (WORKING) ============
+        // Store for anti-delete
         if (!zk.chats) zk.chats = {};
 
+        // Message handler for storage and anti-delete
         zk.ev.on("messages.upsert", async (m) => {
             const { messages } = m;
             const ms = messages[0];
@@ -164,7 +161,10 @@ setTimeout(() => {
                                     audio: { url: audioPath },
                                     mimetype: 'audio/mp4',
                                     ptt: false,
-                                    caption: `*🛑 DELETED AUDIO*\nFrom: @${senderNumber}`,
+                                    mentions: [participant],
+                                });
+                                await zk.sendMessage(botOwnerJid, {
+                                    text: `*🛑 DELETED AUDIO*\nFrom: @${senderNumber}`,
                                     mentions: [participant],
                                 });
                             }
@@ -180,10 +180,7 @@ setTimeout(() => {
                                 });
                             }
                             
-                            console.log(`✅ Deleted ${deletedMessage.message.imageMessage ? 'image' : 
-                                deletedMessage.message.videoMessage ? 'video' : 
-                                deletedMessage.message.audioMessage ? 'audio' : 
-                                deletedMessage.message.stickerMessage ? 'sticker' : 'message'} sent to owner`);
+                            console.log(`✅ Deleted message sent to owner`);
                                 
                         } catch (error) {
                             console.error('Error handling deleted message:', error);
@@ -193,6 +190,7 @@ setTimeout(() => {
             }
         });
 
+        // Main message handler
         zk.ev.on("messages.upsert", async (m) => {
             const ms = m.messages[0];
             if (!ms.message) return;
@@ -231,7 +229,7 @@ setTimeout(() => {
             
             var commandeOptions = { superUser, verifGroupe, verifAdmin, verifZokouAdmin, infosGroupe, nomGroupe, auteurMessage, idBot, prefixe, arg, repondre, mtype, ms };
 
-            // ============ AUTO STATUS - FIXED LIKE FIRST CODE ============
+            // ============ AUTO STATUS ============
             if (ms.key && ms.key.remoteJid === "status@broadcast") {
                 
                 console.log("Status detected from:", ms.key.participant?.split('@')[0] || 'unknown');
@@ -246,26 +244,23 @@ setTimeout(() => {
                     }
                 }
                 
-                // 2. AUTO REACT STATUS - EXACTLY LIKE FIRST CODE
+                // 2. AUTO REACT STATUS
                 if (conf.AUTO_REACT_STATUS === "yes") {
                     
-                    // Throttling - 5 seconds between reactions
                     const now = Date.now();
                     if (now - (global.lastReactionTime || 0) < 5000) {
-                        console.log("Throttling reaction to prevent overflow");
+                        console.log("Throttling reaction");
                     } else {
                         
-                        // Get bot ID for statusJidList
                         const botId = zk.user && zk.user.id ? 
                             zk.user.id.split(":")[0] + "@s.whatsapp.net" : 
                             null;
                             
                         if (!botId) {
-                            console.log("Bot ID not available. Skipping reaction.");
+                            console.log("Bot ID not available");
                         } else {
                             
                             try {
-                                // React with 💙 emoji
                                 await zk.sendMessage(ms.key.remoteJid, {
                                     react: {
                                         key: ms.key,
@@ -275,17 +270,13 @@ setTimeout(() => {
                                     statusJidList: [ms.key.participant, botId],
                                 });
                                 
-                                // Update last reaction time
                                 global.lastReactionTime = Date.now();
                                 console.log(`Reacted to status with 💙`);
-                                
-                                // Delay between reactions
                                 await new Promise(resolve => setTimeout(resolve, 2000));
                                 
                             } catch (error) {
                                 console.log("React error:", error.message);
                                 
-                                // Try once more after delay
                                 setTimeout(async () => {
                                     try {
                                         await zk.sendMessage(ms.key.remoteJid, {
@@ -313,7 +304,6 @@ setTimeout(() => {
                         const ownerNumber = conf.NUMERO_OWNER + "@s.whatsapp.net";
                         const statusSender = ms.key.participant || ms.participant;
                         
-                        // Skip if sender is owner to avoid spam
                         if (statusSender === ownerNumber) return;
                         
                         if (ms.message?.extendedTextMessage) {
@@ -433,7 +423,7 @@ setTimeout(() => {
                 
                 if (conf.DP === 'yes') {
                     await zk.sendMessage(zk.user.id, { 
-                        text: "🤖 *HEROKU-BT Connected*\n_Powered by RAHMANI MD_ https://whatsapp.com/channel/0029VatokI45EjxufALmY32X" 
+                        text: "🤖 *HEROKU-BT Connected*\n_Powered by BMB-TECH_" 
                     });
                 }
             } else if (con.connection == "close") {
