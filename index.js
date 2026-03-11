@@ -118,7 +118,7 @@ setTimeout(() => {
                     global.msgStore[chatId] = global.msgStore[chatId].slice(-30);
                 }
                 
-                // Check for deleted messages using ANTIDELETE1
+                // Check for deleted messages using ANTIDELETE1 (matches your set.js)
                 if (conf.ANTIDELETE1 === "yes") {
                     if (ms.message?.protocolMessage && ms.message.protocolMessage.type === 0) {
                         
