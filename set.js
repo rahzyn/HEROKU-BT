@@ -28,7 +28,7 @@ module.exports = {
     AUTO_DOWNLOAD_STATUS: process.env.AUTO_DOWNLOAD_STATUS || 'no',  // Download status kwa DM
     
     // ============ ANTI-DELETE SETTINGS (IMPORTANT!) ============
-    ANTIDELETE: process.env.ANTI_DELETE || 'yes',                    // 🔥 THIS IS WHAT THE INDEX USES
+    ANTIDELETE1: process.env.ANTI_DELETE1 || 'yes',                    // 🔥 THIS IS WHAT THE INDEX USES
     
     // ============ WARN SYSTEM ============
     WARN_COUNT: process.env.WARN_COUNT || '3',
