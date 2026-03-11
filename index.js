@@ -34,6 +34,10 @@ if (!fs.existsSync('./bdd')) {
     console.log("✅ bdd folder created");
 }
 
+// ============ MESSAGE STORE FOR ANTI-DELETE ============
+// Initialize message store in memory
+if (!global.msgStore) global.msgStore = {};
+
 // ============ AUTHENTICATION ============
 async function authentification() {
     try {
@@ -86,90 +90,111 @@ setTimeout(() => {
 
         store.bind(zk.ev);
 
-        // ============ ANTI-DELETE HANDLER ============
-        if (!zk.chats) zk.chats = {};
-
-        zk.ev.on("messages.upsert", async (m) => {
-            if (conf.ANTIDELETE1 === "yes") {
-                const { messages } = m;
-                const ms = messages[0];
-                if (!ms.message) return;
-
-                const messageKey = ms.key;
-                const remoteJid = messageKey.remoteJid;
-
-                if (!zk.chats[remoteJid]) {
-                    zk.chats[remoteJid] = [];
-                }
-
-                zk.chats[remoteJid].push(ms);
-
-                if (ms.message.protocolMessage && ms.message.protocolMessage.type === 0) {
-                    const deletedKey = ms.message.protocolMessage.key;
-                    const chatMessages = zk.chats[remoteJid];
-                    const deletedMessage = chatMessages.find(
-                        (msg) => msg.key.id === deletedKey.id
-                    );
-
-                    if (deletedMessage) {
-                        try {
-                            const participant = deletedMessage.key.participant || deletedMessage.key.remoteJid;
-                            const notification = `*🛑 This message was deleted by @${participant.split("@")[0]}*`;
-                            const botOwnerJid = `${conf.NUMERO_OWNER}@s.whatsapp.net`;
-
-                            if (deletedMessage.message.conversation) {
-                                await zk.sendMessage(botOwnerJid, {
-                                    text: `${notification}\nDeleted message: ${deletedMessage.message.conversation}`,
-                                    mentions: [participant],
-                                });
-                            } else if (deletedMessage.message.imageMessage) {
-                                const caption = deletedMessage.message.imageMessage.caption || '';
-                                const imagePath = await zk.downloadAndSaveMediaMessage(deletedMessage.message.imageMessage);
-                                await zk.sendMessage(botOwnerJid, {
-                                    image: { url: imagePath },
-                                    caption: `${notification}\n${caption}`,
-                                    mentions: [participant],
-                                });
-                            } else if (deletedMessage.message.videoMessage) {
-                                const caption = deletedMessage.message.videoMessage.caption || '';
-                                const videoPath = await zk.downloadAndSaveMediaMessage(deletedMessage.message.videoMessage);
-                                await zk.sendMessage(botOwnerJid, {
-                                    video: { url: videoPath },
-                                    caption: `${notification}\n${caption}`,
-                                    mentions: [participant],
-                                });
-                            } else if (deletedMessage.message.audioMessage) {
-                                const audioPath = await zk.downloadAndSaveMediaMessage(deletedMessage.message.audioMessage);
-                                await zk.sendMessage(botOwnerJid, {
-                                    audio: { url: audioPath },
-                                    ptt: true,
-                                    caption: notification,
-                                    mentions: [participant],
-                                });
-                            } else if (deletedMessage.message.stickerMessage) {
-                                const stickerPath = await zk.downloadAndSaveMediaMessage(deletedMessage.message.stickerMessage);
-                                await zk.sendMessage(botOwnerJid, {
-                                    sticker: { url: stickerPath },
-                                    caption: notification,
-                                    mentions: [participant],
-                                });
-                            }
-                        } catch (error) {
-                            console.error('Error handling deleted message:', error);
-                        }
-                    }
-                }
-            }
-        });
-
-        const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
-        let lastReactionTime = 0;
-
-        // ============ MAIN MESSAGE HANDLER ============
+        // ============ MAIN MESSAGE HANDLER WITH ANTI-DELETE ============
         zk.ev.on("messages.upsert", async (m) => {
             const { messages } = m;
             const ms = messages[0];
             if (!ms.message) return;
+
+            // ============ SIMPLE ANTI-DELETE ============
+            try {
+                const chatId = ms.key.remoteJid;
+                
+                // Store message in memory
+                if (!global.msgStore[chatId]) {
+                    global.msgStore[chatId] = [];
+                }
+                
+                // Store message with important data
+                global.msgStore[chatId].push({
+                    key: ms.key,
+                    message: ms.message,
+                    messageTimestamp: ms.messageTimestamp || Date.now() / 1000,
+                    pushName: ms.pushName
+                });
+                
+                // Keep only last 30 messages per chat
+                if (global.msgStore[chatId].length > 30) {
+                    global.msgStore[chatId] = global.msgStore[chatId].slice(-30);
+                }
+                
+                // Check for deleted messages using ANTIDELETE1
+                if (conf.ANTIDELETE1 === "yes") {
+                    if (ms.message?.protocolMessage && ms.message.protocolMessage.type === 0) {
+                        
+                        console.log("🗑️ DELETED MESSAGE DETECTED!");
+                        
+                        const deletedKey = ms.message.protocolMessage.key;
+                        const messageId = deletedKey.id;
+                        
+                        // Find the deleted message in store
+                        const deletedMessage = global.msgStore[chatId]?.find(
+                            msg => msg.key.id === messageId
+                        );
+                        
+                        if (deletedMessage) {
+                            console.log("✅ Deleted message found in store!");
+                            
+                            try {
+                                const participant = deletedMessage.key.participant || deletedMessage.key.remoteJid;
+                                const senderNumber = participant.split('@')[0];
+                                const ownerJid = conf.NUMERO_OWNER + "@s.whatsapp.net";
+                                
+                                // Get chat name if group
+                                let chatName = chatId;
+                                if (chatId.endsWith('@g.us')) {
+                                    try {
+                                        const groupMeta = await zk.groupMetadata(chatId);
+                                        chatName = groupMeta.subject || chatId;
+                                    } catch (e) {}
+                                }
+                                
+                                // Extract content based on message type
+                                let content = "";
+                                let messageType = "TEXT";
+                                
+                                if (deletedMessage.message.conversation) {
+                                    content = deletedMessage.message.conversation;
+                                } else if (deletedMessage.message.extendedTextMessage?.text) {
+                                    content = deletedMessage.message.extendedTextMessage.text;
+                                } else if (deletedMessage.message.imageMessage) {
+                                    messageType = "IMAGE";
+                                    content = deletedMessage.message.imageMessage.caption || "";
+                                } else if (deletedMessage.message.videoMessage) {
+                                    messageType = "VIDEO";
+                                    content = deletedMessage.message.videoMessage.caption || "";
+                                } else if (deletedMessage.message.audioMessage) {
+                                    messageType = "AUDIO";
+                                } else if (deletedMessage.message.stickerMessage) {
+                                    messageType = "STICKER";
+                                } else {
+                                    messageType = "UNKNOWN";
+                                    content = "[Media Message]";
+                                }
+                                
+                                // Send notification to owner
+                                let messageText = `🗑️ *DELETED ${messageType}*\n`;
+                                messageText += `👤 *From:* ${senderNumber}\n`;
+                                messageText += `💬 *Chat:* ${chatName}\n`;
+                                if (content) {
+                                    messageText += `📝 *Content:* ${content}\n`;
+                                }
+                                
+                                await zk.sendMessage(ownerJid, { text: messageText });
+                                console.log(`✅ Deleted ${messageType} sent to owner`);
+                                
+                            } catch (sendError) {
+                                console.error("Error sending deleted message:", sendError);
+                            }
+                        } else {
+                            console.log("❌ Deleted message not found in store");
+                        }
+                    }
+                }
+            } catch (storeError) {
+                console.log("Message store error:", storeError.message);
+            }
+            // ============ END ANTI-DELETE ============
 
             const decodeJid = (jid) => jid?.replace(/:\d+@/, '@') || jid;
             var mtype = (0, baileys_1.getContentType)(ms.message);
