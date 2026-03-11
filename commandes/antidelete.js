@@ -3,6 +3,12 @@ const fs = require("fs-extra");
 
 const configPath = './bdd/antidelete.json';
 
+// Create config if not exists
+if (!fs.existsSync('./bdd')) fs.mkdirSync('./bdd');
+if (!fs.existsSync(configPath)) {
+    fs.writeFileSync(configPath, JSON.stringify({ status: "off" }, null, 2));
+}
+
 zokou({
     nomCom: "antidelete",
     categorie: "General",
@@ -17,15 +23,27 @@ zokou({
     }
 
     if (!arg[0] || !["on", "off"].includes(arg[0].toLowerCase())) {
-        return repondre("*❗ Usage:* .antidelete on | off\n\n_Deleted messages will be sent to owner_");
+        return repondre("*❗ Usage:* .antidelete on | off");
     }
 
     const status = arg[0].toLowerCase();
-    fs.writeJSONSync(configPath, { status }, { spaces: 2 });
+    fs.writeFileSync(configPath, JSON.stringify({ status }, null, 2));
     
     if (status === "on") {
-        await repondre(`✅ *ANTIDELETE ENABLED*\n\nAll deleted messages will be forwarded to your DM.`);
+        await repondre(`✅ *ANTIDELETE ENABLED*\n\nDeleted messages will be sent to owner.`);
     } else {
         await repondre(`⚠️ *ANTIDELETE DISABLED*`);
     }
 });
+
+module.exports = {
+    isAntiDeleteOn: () => {
+        try {
+            const data = fs.readFileSync(configPath);
+            const config = JSON.parse(data);
+            return config.status === "on";
+        } catch {
+            return false;
+        }
+    }
+};
