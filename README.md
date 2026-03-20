@@ -3,7 +3,15 @@
 </a>
 
 <p align="center">
-  <img src="https://files.catbox.moe/zotx9t.jpg" width="300" style="border-radius: 50%"/>
+  <img src="https://files.catbox.moe/zotx9t.jpg" width="300" style="border-radius: 50%; box-shadow: 0 0 20px rgba(128, 0, 128, 0.5);"/>
+</p>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/mayankchaudhary26/Cool-Readme-ideas/master/data/star.gif" width="30" height="30"/>
+  <img src="https://raw.githubusercontent.com/mayankchaudhary26/Cool-Readme-ideas/master/data/star.gif" width="30" height="30"/>
+  <img src="https://raw.githubusercontent.com/mayankchaudhary26/Cool-Readme-ideas/master/data/star.gif" width="30" height="30"/>
+  <img src="https://raw.githubusercontent.com/mayankchaudhary26/Cool-Readme-ideas/master/data/star.gif" width="30" height="30"/>
+  <img src="https://raw.githubusercontent.com/mayankchaudhary26/Cool-Readme-ideas/master/data/star.gif" width="30" height="30"/>
 </p>
 
 <div align="center">
@@ -15,6 +23,14 @@
   [![License](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
   
 </div>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/mayankchaudhary26/Cool-Readme-ideas/master/data/star.gif" width="25" height="25"/>
+  <img src="https://raw.githubusercontent.com/mayankchaudhary26/Cool-Readme-ideas/master/data/star.gif" width="25" height="25"/>
+  <img src="https://raw.githubusercontent.com/mayankchaudhary26/Cool-Readme-ideas/master/data/star.gif" width="25" height="25"/>
+  <img src="https://raw.githubusercontent.com/mayankchaudhary26/Cool-Readme-ideas/master/data/star.gif" width="25" height="25"/>
+  <img src="https://raw.githubusercontent.com/mayankchaudhary26/Cool-Readme-ideas/master/data/star.gif" width="25" height="25"/>
+</p>
 
 ---
 
@@ -28,6 +44,14 @@
 
 ---
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/mayankchaudhary26/Cool-Readme-ideas/master/data/star.gif" width="20" height="20"/>
+  <img src="https://raw.githubusercontent.com/mayankchaudhary26/Cool-Readme-ideas/master/data/star.gif" width="20" height="20"/>
+  <img src="https://raw.githubusercontent.com/mayankchaudhary26/Cool-Readme-ideas/master/data/star.gif" width="20" height="20"/>
+  <img src="https://raw.githubusercontent.com/mayankchaudhary26/Cool-Readme-ideas/master/data/star.gif" width="20" height="20"/>
+  <img src="https://raw.githubusercontent.com/mayankchaudhary26/Cool-Readme-ideas/master/data/star.gif" width="20" height="20"/>
+</p>
+
 ## 📋 **Prerequisites**
 - GitHub Account
 - Heroku Account ([Create Here](https://signup.heroku.com))
@@ -35,6 +59,14 @@
 - Basic understanding of deployment
 
 ---
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/mayankchaudhary26/Cool-Readme-ideas/master/data/star.gif" width="22" height="22"/>
+  <img src="https://raw.githubusercontent.com/mayankchaudhary26/Cool-Readme-ideas/master/data/star.gif" width="22" height="22"/>
+  <img src="https://raw.githubusercontent.com/mayankchaudhary26/Cool-Readme-ideas/master/data/star.gif" width="22" height="22"/>
+  <img src="https://raw.githubusercontent.com/mayankchaudhary26/Cool-Readme-ideas/master/data/star.gif" width="22" height="22"/>
+  <img src="https://raw.githubusercontent.com/mayankchaudhary26/Cool-Readme-ideas/master/data/star.gif" width="22" height="22"/>
+</p>
 
 ## 🚀 **Quick Setup Guide**
 
@@ -51,7 +83,7 @@
 
 ### Step 2: Get Session ID
 <p align="center">
-  <a href="https://session-id-site-fycn.onrender.com">
+  <a href="https://heroku-pair.onrender.com">
     <img src="https://img.shields.io/badge/📱%20GET%20SESSION%20ID-green?style=for-the-badge&logo=whatsapp&logoColor=white&labelColor=25D366" width="300"/>
   </a>
 </p>
@@ -59,6 +91,14 @@
 > Generate your session ID by scanning the QR code.
 
 ---
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/mayankchaudhary26/Cool-Readme-ideas/master/data/star.gif" width="25" height="25"/>
+  <img src="https://raw.githubusercontent.com/mayankchaudhary26/Cool-Readme-ideas/master/data/star.gif" width="25" height="25"/>
+  <img src="https://raw.githubusercontent.com/mayankchaudhary26/Cool-Readme-ideas/master/data/star.gif" width="25" height="25"/>
+  <img src="https://raw.githubusercontent.com/mayankchaudhary26/Cool-Readme-ideas/master/data/star.gif" width="25" height="25"/>
+  <img src="https://raw.githubusercontent.com/mayankchaudhary26/Cool-Readme-ideas/master/data/star.gif" width="25" height="25"/>
+</p>
 
 ## 🎯 **Deployment Options**
 
@@ -89,6 +129,14 @@
 
 ---
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/mayankchaudhary26/Cool-Readme-ideas/master/data/star.gif" width="28" height="28"/>
+  <img src="https://raw.githubusercontent.com/mayankchaudhary26/Cool-Readme-ideas/master/data/star.gif" width="28" height="28"/>
+  <img src="https://raw.githubusercontent.com/mayankchaudhary26/Cool-Readme-ideas/master/data/star.gif" width="28" height="28"/>
+  <img src="https://raw.githubusercontent.com/mayankchaudhary26/Cool-Readme-ideas/master/data/star.gif" width="28" height="28"/>
+  <img src="https://raw.githubusercontent.com/mayankchaudhary26/Cool-Readme-ideas/master/data/star.gif" width="28" height="28"/>
+</p>
+
 ## 📊 **Deployment Status**
 
 | Platform | Status | Instructions |
@@ -98,6 +146,14 @@
 | Session | ✅ Active | Generate via session site |
 
 ---
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/mayankchaudhary26/Cool-Readme-ideas/master/data/star.gif" width="23" height="23"/>
+  <img src="https://raw.githubusercontent.com/mayankchaudhary26/Cool-Readme-ideas/master/data/star.gif" width="23" height="23"/>
+  <img src="https://raw.githubusercontent.com/mayankchaudhary26/Cool-Readme-ideas/master/data/star.gif" width="23" height="23"/>
+  <img src="https://raw.githubusercontent.com/mayankchaudhary26/Cool-Readme-ideas/master/data/star.gif" width="23" height="23"/>
+  <img src="https://raw.githubusercontent.com/mayankchaudhary26/Cool-Readme-ideas/master/data/star.gif" width="23" height="23"/>
+</p>
 
 ## 🛠️ **Configuration**
 
