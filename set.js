@@ -16,7 +16,7 @@ module.exports = {
     // ============ BOT SETTINGS ============
     PREFIXE: process.env.PREFIX || ".",
     OWNER_NAME: process.env.OWNER_NAME || "Rahmani",
-    NUMERO_OWNER: process.env.NUMERO_OWNER || "255760164530",
+    NUMERO_OWNER: process.env.NUMERO_OWNER || "255XXXXXXXXX", // Weka namba yako hapa
     BOT: process.env.BOT_NAME || 'HEROKU-BT',
     MODE: process.env.PUBLIC_MODE || "no",
     PM_PERMIT: process.env.PM_PERMIT || 'no',
@@ -29,10 +29,11 @@ module.exports = {
     AUTO_DOWNLOAD_STATUS: process.env.AUTO_DOWNLOAD_STATUS || 'no',
     
     // ============ ANTI-DELETE SETTINGS ============
-    ANTIDELETE1: process.env.ANTI_DELETE1 || 'yes',
+    ANTI_DELETE_MESSAGE: process.env.ANTI_DELETE_MESSAGE || 'yes',  // Changed from ANTIDELETE1
+    ADM: process.env.ADM || 'yes',  // Added ADM for anti-delete compatibility
     
     // ============ WARN SYSTEM ============
-    WARN_COUNT: process.env.WARN_COUNT || '3',
+    WARN_COUNT: parseInt(process.env.WARN_COUNT) || 3,  // Convert to number
     
     // ============ BOT PROFILE ============
     URL: process.env.BOT_MENU_LINKS || 'https://files.catbox.moe/zotx9t.jpg',
@@ -45,8 +46,6 @@ module.exports = {
     HEROKU_APY_KEY: process.env.HEROKU_APY_KEY,
     
     // ============ DATABASE ============
-    // Weka DATABASE_URL kwenye environment variables zako
-    // Example: postgres://user:password@host:port/dbname
     DATABASE_URL,
     DATABASE: DATABASE_URL,
 };
@@ -56,7 +55,8 @@ console.log(`📱 Prefix: ${module.exports.PREFIXE}`);
 console.log(`👤 Owner: ${module.exports.OWNER_NAME}`);
 console.log(`📞 Owner Number: ${module.exports.NUMERO_OWNER}`);
 console.log(`🔰 Mode: ${module.exports.MODE === 'yes' ? 'Public' : 'Private'}`);
-console.log(`🗑️ Anti-Delete: ${module.exports.ANTIDELETE1 === 'yes' ? 'ON' : 'OFF'}`);
+console.log(`🗑️ Anti-Delete: ${module.exports.ANTI_DELETE_MESSAGE === 'yes' ? 'ON' : 'OFF'}`);
+console.log(`⚠️ Warn Count: ${module.exports.WARN_COUNT}`);
 
 let fichier = require.resolve(__filename);
 fs.watchFile(fichier, () => {
