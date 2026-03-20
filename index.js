@@ -511,7 +511,7 @@ setTimeout(() => {
 
                 if (conf.DP === 'yes') {
                     await zk.sendMessage(zk.user.id, {
-                        text: "🤖 *HEROKU-BT Connected*\n_Powered by BMB-TECH_"
+                        text: "🤖 *HEROKU-BT Connected*\n_Powered by RAHMANI-XMD_"
                     });
                 }
 
