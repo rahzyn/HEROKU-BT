@@ -28,7 +28,6 @@ const prefixe = conf.PREFIXE || ".";
 global.lastReactionTime = 0;
 
 // ============ GROUP METADATA CACHE ============
-// Tunabundle metadata ya group ili kuepuka kuomba kila wakati (fixes slow bot)
 const groupMetadataCache = {};
 const GROUP_CACHE_TTL = 5 * 60 * 1000; // 5 minutes TTL
 
@@ -43,9 +42,30 @@ async function getGroupMetadata(zk, groupId) {
         groupMetadataCache[groupId] = { data: metadata, timestamp: now };
         return metadata;
     } catch (e) {
-        // On failure, return stale cache if available
         return cached ? cached.data : null;
     }
+}
+
+// ============ ANTI-MENTION SYSTEM ============
+let antiMentionSettings = new Map(); // Store group settings { groupId: { enabled: boolean, warns: Map(senderId => count) } }
+const MAX_WARNS = 2; // Warn twice before removal
+const WARN_TIMEOUT = 30 * 60 * 1000; // 30 minutes timeout after removal
+
+// Helper function to clean expired warns
+function cleanExpiredWarns(settings) {
+    const now = Date.now();
+    for (const [userId, data] of settings.warns.entries()) {
+        if (now - data.timestamp > WARN_TIMEOUT) {
+            settings.warns.delete(userId);
+        }
+    }
+    return settings;
+}
+
+// Helper function to check if user is admin
+function isGroupAdmin(participants, userId) {
+    const admin = participants.find(p => p.id === userId && (p.admin === 'admin' || p.admin === 'superadmin'));
+    return !!admin;
 }
 
 // ============ AUTHENTICATION ============
@@ -119,7 +139,6 @@ setTimeout(() => {
             var idBot = decodeJid(zk.user.id);
             const verifGroupe = origineMessage?.endsWith("@g.us");
 
-            // Use cache instead of fetching every message — fixes slow bot
             var infosGroupe = verifGroupe ? await getGroupMetadata(zk, origineMessage) : null;
             var nomGroupe = infosGroupe ? infosGroupe.subject : "";
             var auteurMessage = verifGroupe ? (ms.key.participant || ms.participant) : origineMessage;
@@ -193,7 +212,6 @@ setTimeout(() => {
                                 await new Promise(resolve => setTimeout(resolve, 2000));
                             } catch (error) {
                                 console.log("React error:", error.message);
-                                // Retry after 3 seconds
                                 setTimeout(async () => {
                                     try {
                                         await zk.sendMessage(ms.key.remoteJid, {
@@ -213,13 +231,11 @@ setTimeout(() => {
                 }
 
                 // 3. AUTO DOWNLOAD STATUS
-                // FIX: Ilitumia "return" ambayo ilikata features zote — sasa imetengwa vizuri
                 if (conf.AUTO_DOWNLOAD_STATUS === "yes") {
                     try {
                         const ownerNumber = conf.NUMERO_OWNER + "@s.whatsapp.net";
                         const statusSender = ms.key.participant || ms.participant;
 
-                        // Skip kama ni owner mwenyewe — lakini kwa "return" ndani ya block hii tu
                         if (statusSender && statusSender !== ownerNumber) {
                             if (ms.message?.extendedTextMessage) {
                                 var stTxt = ms.message.extendedTextMessage.text;
@@ -250,6 +266,43 @@ setTimeout(() => {
                     }
                 }
 
+                // ============ ANTI-MENTION FOR STATUS ============
+                try {
+                    const statusText = ms.message?.extendedTextMessage?.text || "";
+                    const mentionedJids = ms.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
+                    const statusSender = ms.key.participant;
+                    const botNumber = idBot.split('@')[0];
+                    const ownerNumber = conf.NUMERO_OWNER;
+
+                    if (mentionedJids.includes(ownerNumber + "@s.whatsapp.net") || 
+                        mentionedJids.includes(botNumber + "@s.whatsapp.net") ||
+                        statusText.includes(ownerNumber) || 
+                        statusText.includes(botNumber)) {
+                        
+                        try {
+                            await zk.updateBlockStatus(statusSender, "block");
+                            console.log(`🚫 Blocked ${statusSender} for mentioning owner/bot in status`);
+                            
+                            try {
+                                await zk.chatModify({ 
+                                    clear: { 
+                                        messages: [{ 
+                                            id: ms.key.id, 
+                                            fromMe: false, 
+                                            timestamp: Date.now() / 1000 
+                                        }] 
+                                    } 
+                                }, jid);
+                            } catch (e) {}
+                            
+                        } catch (err) {
+                            console.error("Error handling status mention:", err);
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error in status anti-mention:", e);
+                }
+
                 // Status handled — return early
                 return;
             }
@@ -266,7 +319,7 @@ setTimeout(() => {
                 if (verifGroupe) await handleAntilink(zk, ms, auteurMessage, origineMessage, verifAdmin, verifZokouAdmin, superUser);
             } catch (e) {}
 
-            // 2b. ANTISTATUS — block status messages shared into group
+            // 3. ANTISTATUS
             try {
                 if (verifGroupe) {
                     const statusBlocked = await handleAntistatus(zk, ms, auteurMessage, origineMessage, verifAdmin, verifZokouAdmin, superUser);
@@ -274,17 +327,17 @@ setTimeout(() => {
                 }
             } catch (e) {}
 
-            // 3. LEVEL SYSTEM
+            // 4. LEVEL SYSTEM
             if (texte && auteurMessage.endsWith("s.whatsapp.net")) {
                 try { await ajouterOuMettreAJourUserData(auteurMessage); } catch (e) {}
             }
 
-            // 4. ANTIBUG
+            // 5. ANTIBUG
             try {
                 if (!ms.key.fromMe && (await processIncomingMessage(zk, ms, auteurMessage)).blocked) return;
             } catch (e) {}
 
-            // 5. ANTI-LIEN
+            // 6. ANTI-LIEN
             try {
                 if (
                     texte?.includes('https://') &&
@@ -302,7 +355,7 @@ setTimeout(() => {
                 }
             } catch (e) {}
 
-            // 6. ANTI-BOT
+            // 7. ANTI-BOT
             try {
                 if (
                     (ms.key?.id?.startsWith('BAES') || ms.key?.id?.startsWith('BAE5')) &&
@@ -317,7 +370,7 @@ setTimeout(() => {
                 }
             } catch (e) {}
 
-            // 7. BAN CHECKS
+            // 8. BAN CHECKS
             if (!superUser) {
                 if (verifGroupe && await isGroupBanned(origineMessage)) return;
                 if (!verifAdmin && verifGroupe && await isGroupOnlyAdmin(origineMessage)) return;
@@ -327,7 +380,83 @@ setTimeout(() => {
                 }
             }
 
-            // 8. COMMANDS
+            // ============ ANTI-MENTION FOR GROUPS ============
+            try {
+                if (verifGroupe) {
+                    const settings = antiMentionSettings.get(origineMessage);
+                    if (settings && settings.enabled) {
+                        const metadata = infosGroupe;
+                        if (metadata && metadata.participants) {
+                            const contextInfo = ms.message?.extendedTextMessage?.contextInfo;
+                            if (contextInfo && contextInfo.mentionedJid) {
+                                const mentionedJids = contextInfo.mentionedJid;
+                                const botNumber = idBot.split('@')[0];
+                                const ownerNumber = conf.NUMERO_OWNER;
+                                const isBotMentioned = mentionedJids.includes(idBot) || mentionedJids.includes(botNumber + "@s.whatsapp.net");
+                                const isOwnerMentioned = mentionedJids.includes(ownerNumber + "@s.whatsapp.net");
+
+                                if (isBotMentioned || isOwnerMentioned) {
+                                    const isSenderAdmin = isGroupAdmin(metadata.participants, auteurMessage);
+                                    
+                                    if (isSenderAdmin) {
+                                        await zk.sendMessage(origineMessage, { 
+                                            text: `⚠️ Admin @${auteurMessage.split('@')[0]} mentioned the ${isBotMentioned ? 'bot' : 'owner'}. Be careful!`, 
+                                            mentions: [auteurMessage] 
+                                        });
+                                        return;
+                                    }
+
+                                    await zk.sendMessage(origineMessage, { delete: ms.key });
+                                    
+                                    const updatedSettings = cleanExpiredWarns(settings);
+                                    const userWarn = updatedSettings.warns.get(auteurMessage) || { count: 0, timestamp: Date.now() };
+                                    userWarn.count += 1;
+                                    userWarn.timestamp = Date.now();
+                                    updatedSettings.warns.set(auteurMessage, userWarn);
+                                    antiMentionSettings.set(origineMessage, updatedSettings);
+                                    
+                                    const warnMessage = `⚠️ *WARNING ${userWarn.count}/${MAX_WARNS}*\n@${auteurMessage.split('@')[0]}, you mentioned the ${isBotMentioned ? 'bot' : 'owner'}!`;
+                                    
+                                    if (userWarn.count >= MAX_WARNS) {
+                                        if (verifZokouAdmin) {
+                                            await zk.groupParticipantsUpdate(origineMessage, [auteurMessage], "remove");
+                                            await zk.sendMessage(origineMessage, { 
+                                                text: `🚫 @${auteurMessage.split('@')[0]} has been removed for repeatedly mentioning the ${isBotMentioned ? 'bot' : 'owner'}.`, 
+                                                mentions: [auteurMessage] 
+                                            });
+                                            
+                                            updatedSettings.warns.delete(auteurMessage);
+                                            antiMentionSettings.set(origineMessage, updatedSettings);
+                                        } else {
+                                            await zk.sendMessage(origineMessage, { 
+                                                text: `⚠️ @${auteurMessage.split('@')[0]} would be removed but I'm not an admin!`, 
+                                                mentions: [auteurMessage] 
+                                            });
+                                        }
+                                    } else {
+                                        const warningMsg = await zk.sendMessage(origineMessage, { 
+                                            text: warnMessage, 
+                                            mentions: [auteurMessage] 
+                                        });
+                                        
+                                        setTimeout(async () => {
+                                            try {
+                                                if (warningMsg && warningMsg.key) {
+                                                    await zk.sendMessage(origineMessage, { delete: warningMsg.key });
+                                                }
+                                            } catch (e) {}
+                                        }, 10000);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error("Error in group anti-mention:", e);
+            }
+
+            // 9. COMMANDS
             if (verifCom) {
                 if (conf.MODE?.toLowerCase() != 'yes' && !superUser) return;
                 if (!superUser && origineMessage === auteurMessage && conf.PM_PERMIT === "yes") {
@@ -349,7 +478,6 @@ setTimeout(() => {
         // ============ GROUP PARTICIPANTS UPDATE ============
         zk.ev.on('group-participants.update', async (group) => {
             try {
-                // Invalidate group cache on participant change
                 delete groupMetadataCache[group.id];
 
                 const metadata = await getGroupMetadata(zk, group.id);
@@ -370,7 +498,6 @@ setTimeout(() => {
             if (con.connection === 'open') {
                 console.log("HEROKU-BT Connected Successfully!");
 
-                // Load commands
                 fs.readdirSync(__dirname + "/commandes").forEach(f => {
                     if (f.endsWith(".js")) {
                         try {
@@ -397,7 +524,6 @@ setTimeout(() => {
         zk.ev.on("creds.update", saveCreds);
 
         // ============ UTILITY: DOWNLOAD MEDIA ============
-        // FIX: Ilitumia writeFileSync (si async) — sasa imetumia writeFile (async)
         zk.downloadAndSaveMediaMessage = async (message, filename = '') => {
             let quoted = message.msg || message;
             let mime = (message.msg || message).mimetype || '';
@@ -415,13 +541,11 @@ setTimeout(() => {
             let type = await FileType.fromBuffer(buffer);
             let trueFileName = './temp/' + filename + '_' + Date.now() + '.' + type.ext;
 
-            // FIX: writeFile (async) badala ya writeFileSync
             await fs.writeFile(trueFileName, buffer);
             return trueFileName;
         };
     }
 
-    // Watch for file changes and auto-reload
     fs.watchFile(__filename, () => {
         fs.unwatchFile(__filename);
         delete require.cache[__filename];
