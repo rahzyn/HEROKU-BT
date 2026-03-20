@@ -1,49 +1,110 @@
-<a href="https://git.io/typing-hgm"><img src="https://readme-typing-svg.demolab.com?font=Black+Ops+One&size=100&pause=1000&color=purple&center=true&width=1500&height=200&lines=WELCOME+TO+HEROKU-BT" alt="Typing HGM" /></a>
+<a href="https://git.io/typing-hgm">
+  <img src="https://readme-typing-svg.demolab.com?font=Black+Ops+One&size=60&pause=1000&color=purple&center=true&width=1000&height=120&lines=HEROKU-BT;WhatsApp+Bot+Deployment" alt="Typing SVG" />
+</a>
 
 <p align="center">
-  <img src="https://files.catbox.moe/zotx9t.jpg" width="300"/>
+  <img src="https://files.catbox.moe/zotx9t.jpg" width="300" style="border-radius: 50%"/>
 </p>
 
+<div align="center">
+  
+  ### 🚀 **HEROKU-BT WhatsApp Bot**
+  
+  [![GitHub forks](https://img.shields.io/github/forks/rahzyn/HEROKU-BT?style=social)](https://github.com/rahzyn/HEROKU-BT/fork)
+  [![GitHub stars](https://img.shields.io/github/stars/rahzyn/HEROKU-BT?style=social)](https://github.com/rahzyn/HEROKU-BT/stargazers)
+  [![License](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
+  
+</div>
 
+---
 
-#### SETUP 
+## ✨ **Features**
+- ✅ Easy Deployment
+- ✅ Heroku Support
+- ✅ Render Support
+- ✅ Session Generation
+- ✅ 24/7 Uptime
+- ✅ Regular Updates
 
-- <a href="https://github.com/rahzyn/HEROKU-BT/fork"><img title="Tap Here Open Session Site" src="https://img.shields.io/badge/FORK THIS REPO-h?color=red&style=for-the-badge&logo=msi" width="220" height="38.45"/></a></p>
+---
 
-________________________________
+## 📋 **Prerequisites**
+- GitHub Account
+- Heroku Account ([Create Here](https://signup.heroku.com))
+- WhatsApp Account
+- Basic understanding of deployment
 
-- <a href="https://heroku-pair.onrender.com"><img title="SESSION SITE" src="https://img.shields.io/badge/SESSION SITE-h?color=green&style=for-the-badge&logo=msi" width="220" height="38.45"/></a></p>
+---
 
+## 🚀 **Quick Setup Guide**
 
+### Step 1: Fork the Repository
+<p align="center">
+  <a href="https://github.com/rahzyn/HEROKU-BT/fork">
+    <img src="https://img.shields.io/badge/🔗%20FORK%20REPO-black?style=for-the-badge&logo=github&logoColor=white&labelColor=purple" width="300"/>
+  </a>
+</p>
 
+> Click the button above to fork this repository to your GitHub account.
 
-#### DEPLOY TO HEROKU 
-1. `If You Don't Have An Account On Heroku`
+---
 
-- <a align="center"><a href="https://signup.heroku.com">
- <img src="https://img.shields.io/badge/Create%20Account%20Now-purple?style=for-the-badge&logo=heroku" width="220" height="38.45"/></a></p>
+### Step 2: Get Session ID
+<p align="center">
+  <a href="https://session-id-site-fycn.onrender.com">
+    <img src="https://img.shields.io/badge/📱%20GET%20SESSION%20ID-green?style=for-the-badge&logo=whatsapp&logoColor=white&labelColor=25D366" width="300"/>
+  </a>
+</p>
 
-2. `If You Have a Heroku Account`
+> Generate your session ID by scanning the QR code.
 
- - <a align="center"><a href="https://dashboard.heroku.com/new?template=https://github.com/rahzyn/HEROKU-BT/tree/main"> <img src="https://img.shields.io/badge/DEPLOY%20NOW-blue?style=for-the-badge&logo=heroku" width="220" height="38.45"/></a></p>
+---
 
-_______________________________
-3.    `Deploy here to render`
-    
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/rahzayn/HEROKU-BT)
+## 🎯 **Deployment Options**
 
-_________________________________
+### Option 1: Deploy to Heroku
 
+#### **Don't have Heroku Account?**
+<p align="center">
+  <a href="https://signup.heroku.com">
+    <img src="https://img.shields.io/badge/📝%20CREATE%20HEROKU%20ACCOUNT-purple?style=for-the-badge&logo=heroku&logoColor=white" width="350"/>
+  </a>
+</p>
 
+#### **Already have Heroku Account?**
+<p align="center">
+  <a href="https://dashboard.heroku.com/new?template=https://github.com/rahzyn/HEROKU-BT/tree/main">
+    <img src="https://img.shields.io/badge/🚀%20DEPLOY%20TO%20HEROKU-blue?style=for-the-badge&logo=heroku&logoColor=white" width="350"/>
+  </a>
+</p>
 
-*Thank you for choosing HEROKU-BT, Dont forget 🙃 to fork the repo🪡 and give star 🌟*
-________________________________
-#     CONTACT NUMBER
+---
 
+### Option 2: Deploy to Render
+<p align="center">
+  <a href="https://render.com/deploy?repo=https://github.com/rahzayn/HEROKU-BT">
+    <img src="https://img.shields.io/badge/🔄%20DEPLOY%20TO%20RENDER-46E3B7?style=for-the-badge&logo=render&logoColor=white" width="350"/>
+  </a>
+</p>
 
-<a href="https://wa.me/+255760164530-INFO"><img title="CONTACT-Elon" src="https://img.shields.io/badge/CONTACT-Rahman-md?color=purple&style=for-the-badge&logo=audi" width="200" height="30.45"/></a></p>
+---
 
+## 📊 **Deployment Status**
 
+| Platform | Status | Instructions |
+|----------|--------|--------------|
+| Heroku | ✅ Available | Click deploy button above |
+| Render | ✅ Available | Click render button above |
+| Session | ✅ Active | Generate via session site |
 
-<a href="https://git.io/typing-hgm"><img src="https://readme-typing-svg.demolab.com?font=Black+adam&size=100&pause=2000&color=purple&center=true&width=1000&height=200&lines=WELCOME+AGAIN" alt="Typing HGM" /></a>
+---
 
+## 🛠️ **Configuration**
+
+After deployment, configure these variables:
+
+```env
+SESSION_ID=your-session-id-here
+BOT_NAME=HEROKU-BT
+OWNER_NUMBER=255xxxxxxxxx
+PREFIX=.
