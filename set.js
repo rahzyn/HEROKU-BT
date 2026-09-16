@@ -29,7 +29,7 @@ module.exports = {
     AUTO_REACT: process.env.AUTO_REACT || 'yes',
     AUTO_REACT_STATUS: process.env.AUTO_REACT_STATUS || 'yes',
     AUTO_READ: process.env.AUTO_READ || 'yes',
-    CHATBOT: process.env.CHATBOT || "no",
+    CHATBOT: process.env.CHATBOT || "yes",
     DATABASE_URL,
     DATABASE: DATABASE_URL === databasePath
         ? "postgresql://postgres:bKlIqoOUWFIHOAhKxRWQtGfKfhGKgmRX@viaduct.proxy.rlwy.net:47738/railway"
