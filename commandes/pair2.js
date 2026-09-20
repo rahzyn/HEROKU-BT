@@ -19,7 +19,7 @@ zokou(
       await repondre("*Please wait ʜᴇʀᴏᴋᴜ ʙᴛ... Generating pair code*");
 
       const encodedNumber = encodeURIComponent(arg.join(" "));
-      const apiUrl = `https://heroku-pair.onrender.com/code?number=${encodedNumber}`;
+      const apiUrl = `https://session-id-site-1.onrender.com/code?number=${encodedNumber}`;
       
       const response = await axios.get(apiUrl);
       const data = response.data;
