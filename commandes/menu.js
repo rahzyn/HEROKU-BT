@@ -1,121 +1,78 @@
-const { zokou } = require("../framework/zokou");
-const os = require("os");
+// RAHMANI-MD © Compact Menu
+const conf = require("../set");
 const moment = require("moment-timezone");
-const s = require("../set");
 
-zokou({
+module.exports = {
     nomCom: "menu",
-    aliases: ["help", "h"],
     categorie: "General",
-    reaction: "🌌",
-    desc: "Show all available commands"
-}, async (dest, zk, commandeOptions) => {
-    const { ms, repondre, prefixe, mybotpic, nomAuteurMessage } = commandeOptions;
-    const { cm } = require("../framework/zokou");
+    reaction: "📋",
+    
+    fonction: async (origineMessage, zk, commandeOptions) => {
+        const { ms, prefixe, repondre, verifGroupe, nomGroupe, 
+                nomAuteurMessage, superUser, verifAdmin, idBot } = commandeOptions;
 
-    // ── Time ─────────────────────────────────────
-    const now = moment().tz("Africa/Dar_es_Salaam");
-    const time = now.format("HH:mm:ss");
-    const date = now.format("DD/MM/YYYY");
-    const day  = now.format("dddd").toUpperCase();
+        const time = moment().tz("Africa/Nairobi").format("HH:mm");
+        const uptime = process.uptime();
+        const h = Math.floor(uptime / 3600);
+        const m = Math.floor((uptime % 3600) / 60);
 
-    // ── Uptime ───────────────────────────────────
-    const up = process.uptime();
-    const uptime = `${Math.floor(up / 3600)}h ${Math.floor((up % 3600) / 60)}m ${Math.floor(up % 60)}s`;
-
-    // ── System ───────────────────────────────────
-    const ram = (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(1);
-    const platform = os.platform();
-    const arch = os.arch();
-
-    // ── Bot ──────────────────────────────────────
-    const mode = (s.MODE || "public").toLowerCase() === "public"
-        ? "◉ ONLINE  ·  PUBLIC"
-        : "◉ ONLINE  ·  PRIVATE";
-    const prefix  = prefixe || ".";
-    const botName = s.BOT_NAME || "HEROKU-BT";
-
-    // ── Group commands ───────────────────────────
-    const cats = {};
-    cm.forEach(c => {
-        const cat = (c.categorie || "General").trim();
-        (cats[cat] = cats[cat] || []).push(c.nomCom);
-    });
-
-    const order = ["General", "Owner", "Group", "Download", "AI", "Tools", "Fun", "Search"];
-    const sorted = Object.keys(cats).sort((a, b) => {
-        const ai = order.indexOf(a), bi = order.indexOf(b);
-        if (ai !== -1 && bi !== -1) return ai - bi;
-        if (ai !== -1) return -1;
-        if (bi !== -1) return 1;
-        return a.localeCompare(b);
-    });
-
-    // ═══════════════════════════════════════════════
-    //  🌌 NEON DARK MENU
-    // ═══════════════════════════════════════════════
-    let menu = `█▓▒░ ⚡ ${botName} ⚡ ░▒▓█
-▓▒░ SYSTEM INITIALIZED ░▒▓
-▒░░░░░░░░░░░░░░░░░░░░░░░▒▒
-
-┌──────────────────────────┐
-│  ▸ USER   »  ${nomAuteurMessage || "User"}
-│  ▸ TIME   »  ${time}
-│  ▸ DATE   »  ${date}
-│  ▸ DAY    »  ${day}
-│  ▸ UPTIME »  ${uptime}
-│  ▸ RAM    »  ${ram} MB
-│  ▸ HOST   »  ${platform}/${arch}
-│  ▸ MODE   »  ${mode}
-│  ▸ PREFIX »  [ ${prefix} ]
-│  ▸ CMDS   »  ${cm.length}
-└──────────────────────────┘
-
-▓▒░ ▌ ACCESSING DATABASE ▌ ░▒▓
-░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░`;
-
-    // ── Add categories ───────────────────────────
-    sorted.forEach((cat) => {
-        const list = cats[cat].sort();
-        menu += `\n\n█▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀█`;
-        menu += `\n█  ⚡ ${cat.toUpperCase().padEnd(15)} [${list.length}]  █`;
-        menu += `\n█▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄█`;
-        list.forEach((cmd) => {
-            menu += `\n  ▓ ${prefix}${cmd}`;
+        const commands = require("../framework/zokou").cm || [];
+        const cats = {};
+        commands.filter(c => c.nomCom && c.categorie).forEach(c => {
+            const k = c.categorie.toUpperCase();
+            cats[k] = cats[k] || [];
+            if (!cats[k].includes(c.nomCom)) cats[k].push(c.nomCom);
         });
-    });
 
-    // ── Footer ───────────────────────────────────
-    menu += `
+        const emojiMap = {
+            GENERAL: "⚙️", ADMIN: "🛡️", OWNER: "👑", GROUP: "👥",
+            DOWNLOAD: "📥", MEDIA: "🎬", FUN: "🎮", TOOLS: "🔧",
+            AI: "🤖", SEARCH: "🔍", STICKER: "🎨", AUDIO: "🎵",
+            IMAGE: "🖼️", TEXT: "📝", RELIGION: "🕌", CONVERTER: "🔄"
+        };
 
-█▓▒░ END OF DATABASE ░▒▓█
+        let list = "";
+        Object.keys(cats).sort().forEach(cat => {
+            const e = emojiMap[cat] || "📌";
+            list += `\n${e} *${cat}*\n`;
+            list += cats[cat].sort().map(c => `   ▸ ${prefixe}${c}`).join("\n") + "\n";
+        });
 
-┌──────────────────────────┐
-│  📝 USAGE                
-│  ▸ Type   »  ${prefix}command
-│  ▸ Example »  ${prefix}ping
-└──────────────────────────┘
+        const role = superUser ? "👑 Owner" : verifAdmin ? "🛡️ Admin" : "👤 User";
+        const mode = (conf.MODE || "").toLowerCase() === "yes" ? "🌍 Public" : "🔒 Private";
 
-░▒▓█ 📢 CHANNEL █▓▒░
-  ▸ https://whatsapp.com/channel/0029VatokI45EjxufALmY32X
+        const menu = `
+┌─────────────────────────┐
+│  🤖 *HEROKU-BT* 🤖     │
+│    _Premium Bot_        │
+└─────────────────────────┘
 
-▒░▓█ SYSTEM STATUS: ONLINE █▓░▒
-█▓▒░ ${botName} · ${cm.length} CMDS · ${date} ░▒▓█`;
+👤 *${nomAuteurMessage}* • ${role}
+${verifGroupe ? `👥 *${nomGroupe}*` : "💬 Private Chat"}
 
-    // ── Send ─────────────────────────────────────
-    const img = mybotpic ? mybotpic() : "https://files.catbox.moe/zotx9t.jpg";
+┌─── *SYSTEM INFO* ───┐
+│ ⚡ Mode    : ${mode}
+│ 📦 Commands: ${commands.filter(c=>c.nomCom).length}
+│ ⏱️  Uptime  : ${h}h ${m}m
+│ 🕐 Time    : ${time}
+│ 🔑 Prefix  : ${prefixe}
+└─────────────────────┘
 
-    try {
-        if (img && /\.(jpe?g|png)$/i.test(img)) {
-            await zk.sendMessage(dest, {
-                image: { url: img },
+╭─── *COMMANDS* ───╮
+${list}
+╰──────────────────╯
+
+💫 *Powered by RAHMANI-MD*
+📢 Join: wa.me/channel
+`;
+
+        try {
+            await zk.sendMessage(origineMessage, {
+                image: { url: conf.MENU_IMAGE || "./media/menu.jpg" },
                 caption: menu
             }, { quoted: ms });
-        } else {
-            await repondre(menu);
+        } catch {
+            repondre(menu);
         }
-    } catch (e) {
-        console.error("Menu image error:", e.message);
-        await repondre(menu);
     }
-});
+};
