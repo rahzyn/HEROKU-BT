@@ -1,81 +1,80 @@
 const { zokou } = require("../framework/zokou");
+const conf = require("../set");
 const os = require("os");
-const moment = require("moment-timezone");
-const s = require("../set");
+const { performance } = require("perf_hooks");
 
 zokou({
     nomCom: "ping",
-    aliases: ["p", "speed"],
     categorie: "General",
     reaction: "⚡",
-    desc: "Check bot response speed"
+    desc: "Check bot speed with beautiful card",
+    fromMe: false
 }, async (dest, zk, commandeOptions) => {
-    const { ms, repondre } = commandeOptions;
+    const { ms, auteurMessage, nomAuteurMessage } = commandeOptions;
 
-    // ── Time ─────────────────────────────────────
-    const now = moment().tz("Africa/Dar_es_Salaam");
-    const time = now.format("HH:mm:ss");
-    const date = now.format("DD/MM/YYYY");
+    const start = performance.now();
+    const sent = await zk.sendMessage(dest, { text: "🔵 *Pinging...*" }, { quoted: ms });
+    const ping = Math.round(performance.now() - start);
 
-    // ── Measure latency (send + measure) ─────────
-    const sentAt = Date.now();
-    const sent = await zk.sendMessage(dest, { text: "█▓▒░ ▓▒░ PINGING... ░▒▓ ░▒▓█" }, { quoted: ms });
-    const latency = Date.now() - sentAt;
+    // Uptime
+    const uptime = process.uptime();
+    const d = Math.floor(uptime / 86400);
+    const h = Math.floor((uptime % 86400) / 3600);
+    const m = Math.floor((uptime % 3600) / 60);
 
-    // ── Uptime ───────────────────────────────────
-    const up = process.uptime();
-    const uptime = `${Math.floor(up / 3600)}h ${Math.floor((up % 3600) / 60)}m ${Math.floor(up % 60)}s`;
+    // Date & Time
+    const now = new Date();
+    const date = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+    const time = now.toLocaleTimeString('en-GB');
 
-    // ── System ───────────────────────────────────
-    const ram = (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(1);
-    const platform = os.platform();
-    const arch = os.arch();
+    // Speed indicator
+    let emoji = "🟢", status = "Excellent";
+    if (ping > 200) { emoji = "🟡"; status = "Good"; }
+    if (ping > 500) { emoji = "🟠"; status = "Average"; }
+    if (ping > 1000) { emoji = "🔴"; status = "Slow"; }
 
-    // ── Speed rating ─────────────────────────────
-    let rating, status;
-    if (latency < 200)      { rating = "◉◉◉◉◉"; status = "EXCELLENT"; }
-    else if (latency < 500) { rating = "◉◉◉◉◎"; status = "GOOD"; }
-    else if (latency < 1000){ rating = "◉◉◉◎◎"; status = "FAIR"; }
-    else if (latency < 2000){ rating = "◉◉◎◎◎"; status = "SLOW"; }
-    else                    { rating = "◉◎◎◎◎"; status = "POOR"; }
+    // Memory
+    const memUsed = (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(1);
 
-    // ── Bot ──────────────────────────────────────
-    const mode = (s.MODE || "public").toLowerCase() === "public"
-        ? "◉ ONLINE  ·  PUBLIC"
-        : "◉ ONLINE  ·  PRIVATE";
-    const botName = s.BOT_NAME || "HEROKU-BT";
+    try { await zk.sendMessage(dest, { delete: sent.key }); } catch (e) {}
 
-    // ═══════════════════════════════════════════════
-    //  ⚡ NEON DARK PING RESPONSE
-    // ═══════════════════════════════════════════════
-    const pingMsg = `█▓▒░ ⚡ PONG ⚡ ░▒▓█
-▓▒░ SIGNAL ACQUIRED ░▒▓
-▒░░░░░░░░░░░░░░░░░░░░░░░▒▒
+    const text = `⚡ *${conf.BOT_NAME || "HEROKU-BT"} SYSTEM*
+*STATUS*
+Bot is running smoothly 🚀
 
-┌──────────────────────────┐
-│  ▸ STATUS   »  ${mode}
-│  ▸ LATENCY  »  ${latency} ms
-│  ▸ RATING   »  ${rating}
-│  ▸ QUALITY  »  ${status}
-│  ▸ TIME     »  ${time}
-│  ▸ DATE     »  ${date}
-│  ▸ UPTIME   »  ${uptime}
-│  ▸ RAM      »  ${ram} MB
-│  ▸ HOST     »  ${platform}/${arch}
-└──────────────────────────┘
+┌─────────────────────
+│  📡 *${conf.BOT_NAME || "HEROKU-BT"} PING*
+│
+│  ⏱️ Response: *${ping}ms*
+│  📅 Date: *${date}*
+│  🕐 Time: *${time}*
+│  ⚡ Uptime: *${d}h ${h}m*
+│
+└─────────────────────
 
-▓▒░ ▌ CONNECTION STABLE ▌ ░▒▓
-▒░▓█ ${botName} · ONLINE █▓░▒
-█▓▒░ ⚡ SYSTEM NOMINAL ⚡ ░▒▓█`;
+> *View channel*`;
 
-    // ── Edit the "PINGING..." message with result ─
-    try {
-        await zk.sendMessage(dest, {
-            text: pingMsg,
-            edit: sent.key
-        });
-    } catch (e) {
-        // Fallback: send new message if edit not supported
-        await repondre(pingMsg);
-    }
+    await zk.sendMessage(dest, {
+        text: text,
+        mentions: [auteurMessage],
+        contextInfo: {
+            forwardingScore: 999,
+            isForwarded: true,
+            forwardedNewsletterMessageInfo: {
+                newsletterJid: "120363353854480831@newsletter",
+                newsletterName: conf.BOT_NAME || "HEROKU-BT",
+                serverMessageId: 143
+            },
+            externalAdReply: {
+                title: `⚡ ${conf.BOT_NAME || "HEROKU-BT"} SYSTEM STATUS`,
+                body: "Bot is running smoothly 🚀",
+                mediaType: 1,
+                mediaUrl: "https://whatsapp.com/channel/0029VatokI45EjxufALmY32X",
+                sourceUrl: "https://whatsapp.com/channel/0029VatokI45EjxufALmY32X",
+                thumbnailUrl: "https://files.catbox.moe/zotx9t.jpg",
+                showAdAttribution: false,
+                renderLargerThumbnail: true
+            }
+        }
+    }, { quoted: ms });
 });
