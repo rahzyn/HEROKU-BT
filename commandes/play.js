@@ -3,11 +3,11 @@ const conf = require("../set");
 const axios = require("axios");
 
 // ═══════════════════════════════════════════════
-//   ⚙️ API CONFIG
+//   ⚙️ API CONFIG (Updated)
 // ═══════════════════════════════════════════════
-const SEARCH_API = "https://api.nyxs.pw/search/yt";
-const MP3_API = "https://api.nyxs.pw/dl/ytmp3";
-const MP4_API = "https://api.nyxs.pw/dl/ytmp4";
+const SEARCH_API = "https://apis.davidcyril.name.ng/search/youtube";
+const MP3_API = "https://apis.davidcyril.name.ng/download/ytmp3";
+const MP4_API = "https://apis.davidcyril.name.ng/download/ytmp4";
 
 // ═══════════════════════════════════════════════
 //   🎧 .play — Download Audio
@@ -76,7 +76,7 @@ zokou({
         // Download MP3
         const r = await axios.get(`${MP3_API}?url=${encodeURIComponent(videoUrl)}`, { timeout: 90000 });
         const d = r.data;
-        const audioUrl = d?.result?.download?.url || d?.download?.url || d?.result?.url || d?.url;
+        const audioUrl = d?.result?.download_url || d?.download_url || d?.result?.url || d?.url;
         const title = d?.result?.title || d?.title || query;
         const cover = d?.result?.thumbnail || d?.thumbnail || "https://files.catbox.moe/zotx9t.jpg";
 
@@ -183,7 +183,7 @@ zokou({
 
         const r = await axios.get(`${MP4_API}?url=${encodeURIComponent(videoUrl)}`, { timeout: 90000 });
         const d = r.data;
-        const videoLink = d?.result?.download?.url || d?.download?.url || d?.result?.url || d?.url;
+        const videoLink = d?.result?.download_url || d?.download_url || d?.result?.url || d?.url;
         const title = d?.result?.title || d?.title || query;
         const cover = d?.result?.thumbnail || d?.thumbnail || "https://files.catbox.moe/zotx9t.jpg";
 
