@@ -10,72 +10,63 @@ zokou({
     desc: "Show bot menu",
     fromMe: false
 }, async (dest, zk, commandeOptions) => {
-    const { ms, auteurMessage, nomAuteurMessage } = commandeOptions;
+    const { ms, auteurMessage } = commandeOptions;
 
-    // Read commands from framework
-    const commandsPath = path.join(__dirname, "../framework/zokou.js");
-    let totalCommands = 0;
+    const commandsDir = path.join(__dirname, "../commands");
     let categories = {};
+    let totalCommands = 0;
 
     try {
-        const commands = require("../framework/zokou").commandes || [];
-        totalCommands = commands.length;
-        
-        commands.forEach(cmd => {
-            const cat = cmd.categorie || "General";
-            if (!categories[cat]) categories[cat] = [];
-            categories[cat].push(cmd.nomCom);
-        });
-    } catch (e) {
-        console.log("Menu error:", e.message);
-    }
+        const files = fs.readdirSync(commandsDir);
+        for (const file of files) {
+            if (!file.endsWith(".js")) continue;
+            try {
+                const content = fs.readFileSync(path.join(commandsDir, file), "utf8");
+                const nomMatch = content.match(/nomCom:\s*["']([^"']+)["']/);
+                const catMatch = content.match(/categorie:\s*["']([^"']+)["']/);
+                if (nomMatch) {
+                    const category = catMatch ? catMatch[1] : "General";
+                    if (!categories[category]) categories[category] = [];
+                    categories[category].push(nomMatch[1]);
+                    totalCommands++;
+                }
+            } catch (e) {}
+        }
+    } catch (e) {}
 
-    // Uptime
     const uptime = process.uptime();
     const d = Math.floor(uptime / 86400);
     const h = Math.floor((uptime % 86400) / 3600);
     const m = Math.floor((uptime % 3600) / 60);
 
-    // Date
     const now = new Date();
     const date = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
     const time = now.toLocaleTimeString('en-GB');
 
-    // Build categories list
-    let catList = "";
+    let menuText = `╭━━━〔 *${(conf.BOT_NAME || "HEROKU-BT").toUpperCase()}* 〕━━━╮
+┃
+┃  ⚡ *Status*   : Online ✅
+┃  📦 *Commands* : ${totalCommands}
+┃  ⏱️ *Uptime*   : ${d}d ${h}h ${m}m
+┃  📅 *Date*     : ${date}
+┃  🕐 *Time*     : ${time}
+┃
+╰━━━━━━━━━━━━━━━╯
+
+`;
+
     for (const [cat, cmds] of Object.entries(categories)) {
-        catList += `│  📁 *${cat}* (${cmds.length})\n`;
+        menuText += `╭─❰ *${cat.toUpperCase()}* ❱\n`;
+        cmds.forEach(cmd => {
+            menuText += `┃ ▸ ${conf.PREFIXE || "."}${cmd}\n`;
+        });
+        menuText += `╰────────────\n\n`;
     }
 
-    const text = `╔═══════════════════════╗
-║   📋 *${(conf.BOT_NAME || "HEROKU-BT").toUpperCase()} MENU*   
-╚═══════════════════════╝
-
-    🤖 *Bot is Online* ✅
-
-╭───────────────────────╮
-│  📊 *BOT INFO*
-├───────────────────────┤
-│
-│  📛 *Name:* ${conf.BOT_NAME || "HEROKU-BT"}
-│  📦 *Commands:* ${totalCommands}
-│  ⚡ *Uptime:* ${d}d ${h}h ${m}m
-│  📅 *Date:* ${date}
-│  🕐 *Time:* ${time}
-│
-╰───────────────────────╯
-
-╭───────────────────────╮
-│  📂 *CATEGORIES*
-├───────────────────────┤
-│
-${catList}│
-╰───────────────────────╯
-
-> *View channel*`;
+    menuText += `> *View channel*`;
 
     await zk.sendMessage(dest, {
-        text: text,
+        text: menuText,
         mentions: [auteurMessage],
         contextInfo: {
             forwardingScore: 999,
